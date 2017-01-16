@@ -1,0 +1,18 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Jobbr.Server.MsSql</id>
+    <version>$version$</version>
+    <authors>Jobbr</authors>
+    <owners>Jobbr</owners>
+    <projectUrl>http://github.com/jobbrIO/jobbr-storage-mssql</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Jobbr is a .NET JobServer</description>
+    <copyright>Copyright 2016</copyright>
+    <dependencies>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="ilmerged\Jobbr.Server.MsSql.*" target="lib\net45"/>
+  </files>
+</package>

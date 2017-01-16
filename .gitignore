@@ -250,3 +250,7 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# output of ilmerge & nuget package
+source/ilmerged
+source/Jobbr.Server.*.nupkg

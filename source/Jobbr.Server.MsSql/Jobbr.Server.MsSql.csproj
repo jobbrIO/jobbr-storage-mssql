@@ -52,17 +52,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\submodules\jobbr-server\source\Jobbr.Common\Jobbr.Common.csproj">
-      <Project>{37e22e5d-f8b2-4336-b509-53c94b170e4c}</Project>
-      <Name>Jobbr.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\submodules\jobbr-server\source\Jobbr.Server\Jobbr.Server.csproj">
-      <Project>{A45F729D-8629-4C7A-96B8-29EAA8D52919}</Project>
-      <Name>Jobbr.Server</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\submodules\jobbr-server\source\Jobbr.Shared\Jobbr.Shared.csproj">
-      <Project>{4c7ff32d-8514-4d17-b21c-3ef69968ab1f}</Project>
-      <Name>Jobbr.Shared</Name>
+    <ProjectReference Include="..\submodules\jobbr-cm-jobstorage\source\Jobbr.ComponentModel.JobStorage\Jobbr.ComponentModel.JobStorage.csproj">
+      <Project>{375ffcca-e278-4744-96dd-d4ab92186c66}</Project>
+      <Name>Jobbr.ComponentModel.JobStorage</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

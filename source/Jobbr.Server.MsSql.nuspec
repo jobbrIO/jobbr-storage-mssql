@@ -13,6 +13,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="ilmerged\Jobbr.Server.MsSql.*" target="lib\net45"/>
+    <file src="tools\Jobbr.Server.MsSql.dll" target="lib\net45"/>
+    <file src="tools\Jobbr.Server.MsSql.pdb" target="lib\net45"/>
   </files>
 </package>

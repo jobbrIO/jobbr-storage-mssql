@@ -86,7 +86,7 @@ namespace Jobbr.Server.MsSql
                         {
                             TriggerId = triggerId,
                             DateTimeNowUtc = DateTime.UtcNow,
-                            State = JobRunState.Scheduled.ToString()
+                            State = JobRunStates.Scheduled.ToString()
                         }).ToList();
 
                 return jobRuns.Any() ? jobRuns.FirstOrDefault() : null;
@@ -182,8 +182,6 @@ namespace Jobbr.Server.MsSql
                         jobRun.PlannedStartDateTimeUtc,
                         jobRun.Progress,
                         jobRun.Pid,
-                        jobRun.WorkingDir,
-                        jobRun.TempDir,
                         ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc ?? fromDb.ActualStartDateTimeUtc,
                         EstimatedEndDateTimeUtc = jobRun.EstimatedEndDateTimeUtc ?? fromDb.EstimatedEndDateTimeUtc,
                         ActualEndDateTimeUtc = jobRun.ActualEndDateTimeUtc ?? fromDb.ActualEndDateTimeUtc,
@@ -319,15 +317,15 @@ namespace Jobbr.Server.MsSql
             var sql = string.Format(
                 "SELECT * FROM {0}.JobRuns WHERE [TriggerId] = @TriggerId AND [State] IN ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}')",
                 this.schemaName,
-                JobRunState.Collecting,
-                JobRunState.Connected,
-                JobRunState.Finishing,
-                JobRunState.Initializing,
-                JobRunState.Preparing,
-                JobRunState.Processing,
-                JobRunState.Scheduled,
-                JobRunState.Started,
-                JobRunState.Starting);
+                JobRunStates.Collecting,
+                JobRunStates.Connected,
+                JobRunStates.Finishing,
+                JobRunStates.Initializing,
+                JobRunStates.Preparing,
+                JobRunStates.Processing,
+                JobRunStates.Scheduled,
+                JobRunStates.Started,
+                JobRunStates.Starting);
 
             using (var connection = new SqlConnection(this.connectionString))
             {

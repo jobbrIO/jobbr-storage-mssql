@@ -5,10 +5,6 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobbr.Server.MsSql", "Jobbr.Server.MsSql\Jobbr.Server.MsSql.csproj", "{A0B35BE9-E134-4C81-9976-AC08850218D1}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{2840AA7C-0707-43E2-8CF5-F0EBB4FDA11A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobbr.ComponentModel.JobStorage", "submodules\jobbr-cm-jobstorage\source\Jobbr.ComponentModel.JobStorage\Jobbr.ComponentModel.JobStorage.csproj", "{375FFCCA-E278-4744-96DD-D4AB92186C66}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,15 +15,8 @@ Global
 		{A0B35BE9-E134-4C81-9976-AC08850218D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0B35BE9-E134-4C81-9976-AC08850218D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0B35BE9-E134-4C81-9976-AC08850218D1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{375FFCCA-E278-4744-96DD-D4AB92186C66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{375FFCCA-E278-4744-96DD-D4AB92186C66}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{375FFCCA-E278-4744-96DD-D4AB92186C66}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{375FFCCA-E278-4744-96DD-D4AB92186C66}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{375FFCCA-E278-4744-96DD-D4AB92186C66} = {2840AA7C-0707-43E2-8CF5-F0EBB4FDA11A}
 	EndGlobalSection
 EndGlobal

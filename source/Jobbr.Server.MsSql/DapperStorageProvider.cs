@@ -13,7 +13,7 @@ namespace Jobbr.Server.MsSql
     /// </summary>
     public class DapperStorageProvider : IJobStorageProvider
     {
-        private string connectionString;
+        private readonly string connectionString;
 
         private readonly string schemaName;
 
@@ -25,13 +25,12 @@ namespace Jobbr.Server.MsSql
 
         public override string ToString()
         {
-            return string.Format("[{0}, Schema: '{1}', Connection: '{2}']", this.GetType().Name, this.schemaName,
-                this.connectionString);
+            return $"[{this.GetType().Name}, Schema: '{this.schemaName}', Connection: '{this.connectionString}']";
         }
 
         public List<Job> GetJobs()
         {
-            var sql = string.Format("SELECT * FROM {0}.Jobs", this.schemaName);
+            var sql = $"SELECT * FROM {this.schemaName}.Jobs";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -43,10 +42,9 @@ namespace Jobbr.Server.MsSql
 
         public long AddJob(Job job)
         {
-            var sql = string.Format(
-                @"INSERT INTO {0}.Jobs ([UniqueName],[Title],[Type],[Parameters],[CreatedDateTimeUtc]) VALUES (@UniqueName, @Title, @Type, @Parameters, @UtcNow)
-                          SELECT CAST(SCOPE_IDENTITY() as int)",
-                this.schemaName);
+            var sql =
+                $@"INSERT INTO {this.schemaName}.Jobs ([UniqueName],[Title],[Type],[Parameters],[CreatedDateTimeUtc]) VALUES (@UniqueName, @Title, @Type, @Parameters, @UtcNow)
+                          SELECT CAST(SCOPE_IDENTITY() as int)";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -59,9 +57,7 @@ namespace Jobbr.Server.MsSql
         public JobRun GetLastJobRunByTriggerId(long triggerId)
         {
             var sql =
-                string.Format(
-                    "SELECT TOP 1 * FROM {0}.JobRuns WHERE [TriggerId] = @TriggerId ORDER BY [PlannedStartDateTimeUtc] DESC",
-                    this.schemaName);
+                $"SELECT TOP 1 * FROM {this.schemaName}.JobRuns WHERE [TriggerId] = @TriggerId ORDER BY [PlannedStartDateTimeUtc] DESC";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -74,9 +70,7 @@ namespace Jobbr.Server.MsSql
         public JobRun GetFutureJobRunsByTriggerId(long triggerId)
         {
             var sql =
-                string.Format(
-                    "SELECT * FROM {0}.JobRuns WHERE [TriggerId] = @TriggerId AND PlannedStartDateTimeUtc >= @DateTimeNowUtc AND State = @State ORDER BY [PlannedStartDateTimeUtc] ASC",
-                    this.schemaName);
+                $"SELECT * FROM {this.schemaName}.JobRuns WHERE [TriggerId] = @TriggerId AND PlannedStartDateTimeUtc >= @DateTimeNowUtc AND State = @State ORDER BY [PlannedStartDateTimeUtc] ASC";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -95,11 +89,10 @@ namespace Jobbr.Server.MsSql
 
         public int AddJobRun(JobRun jobRun)
         {
-            var sql = string.Format(
-                @"INSERT INTO {0}.JobRuns ([JobId],[TriggerId],[UniqueId],[JobParameters],[InstanceParameters],[PlannedStartDateTimeUtc],[State])
+            var sql =
+                $@"INSERT INTO {this.schemaName}.JobRuns ([JobId],[TriggerId],[UniqueId],[JobParameters],[InstanceParameters],[PlannedStartDateTimeUtc],[State])
                           VALUES (@JobId,@TriggerId,@UniqueId,@JobParameters,@InstanceParameters,@PlannedStartDateTimeUtc,@State)
-                          SELECT CAST(SCOPE_IDENTITY() as int)",
-                this.schemaName);
+                          SELECT CAST(SCOPE_IDENTITY() as int)";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -123,7 +116,7 @@ namespace Jobbr.Server.MsSql
 
         public List<JobRun> GetJobRuns()
         {
-            var sql = string.Format("SELECT * FROM {0}.JobRuns", this.schemaName);
+            var sql = $"SELECT * FROM {this.schemaName}.JobRuns";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -133,8 +126,7 @@ namespace Jobbr.Server.MsSql
 
         public bool UpdateProgress(long jobRunId, double? progress)
         {
-            var sql = string.Format(@"UPDATE {0}.{1} SET [Progress] = @Progress WHERE [Id] = @Id", this.schemaName,
-                "JobRuns");
+            var sql = $@"UPDATE {this.schemaName}.{"JobRuns"} SET [Progress] = @Progress WHERE [Id] = @Id";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -153,8 +145,7 @@ namespace Jobbr.Server.MsSql
                 return false;
             }
 
-            var sql = string.Format(
-                @"UPDATE {0}.{1} SET
+            var sql = $@"UPDATE {this.schemaName}.{"JobRuns"} SET
                                         [JobParameters] = @JobParameters,
                                         [InstanceParameters] = @InstanceParameters,
                                         [PlannedStartDateTimeUtc] = @PlannedStartDateTimeUtc,
@@ -166,9 +157,7 @@ namespace Jobbr.Server.MsSql
                                         [Pid] = @Pid,
                                         [WorkingDir] = @WorkingDir,
                                         [TempDir] = @TempDir
-                                    WHERE [Id] = @Id",
-                this.schemaName,
-                "JobRuns");
+                                    WHERE [Id] = @Id";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -194,7 +183,7 @@ namespace Jobbr.Server.MsSql
 
         public Job GetJobById(long id)
         {
-            var sql = string.Format("SELECT TOP 1 * FROM {0}.Jobs WHERE [Id] = @Id", this.schemaName);
+            var sql = $"SELECT TOP 1 * FROM {this.schemaName}.Jobs WHERE [Id] = @Id";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -204,7 +193,7 @@ namespace Jobbr.Server.MsSql
 
         public Job GetJobByUniqueName(string identifier)
         {
-            var sql = string.Format("SELECT TOP 1 * FROM {0}.Jobs WHERE [UniqueName] = @UniqueName", this.schemaName);
+            var sql = $"SELECT TOP 1 * FROM {this.schemaName}.Jobs WHERE [UniqueName] = @UniqueName";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -214,7 +203,7 @@ namespace Jobbr.Server.MsSql
 
         public JobRun GetJobRunById(long id)
         {
-            var sql = string.Format("SELECT * FROM {0}.JobRuns WHERE [Id] = @Id", this.schemaName);
+            var sql = $"SELECT * FROM {this.schemaName}.JobRuns WHERE [Id] = @Id";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -257,16 +246,13 @@ namespace Jobbr.Server.MsSql
                 return false;
             }
 
-            var sql = string.Format(
-                @"UPDATE {0}.{1} SET
+            var sql = $@"UPDATE {this.schemaName}.{"Jobs"} SET
                                         [UniqueName] = @UniqueName,
                                         [Title] = @Title,
                                         [Type] = @Type,
                                         [Parameters] = @Parameters,
                                         [UpdatedDateTimeUtc] = @UtcNow
-                                    WHERE [Id] = @Id",
-                this.schemaName,
-                "Jobs");
+                                    WHERE [Id] = @Id";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -304,7 +290,7 @@ namespace Jobbr.Server.MsSql
 
         public List<JobRun> GetJobRunsByTriggerId(long triggerId)
         {
-            var sql = string.Format("SELECT * FROM {0}.JobRuns WHERE [TriggerId] = @TriggerId", this.schemaName);
+            var sql = $"SELECT * FROM {this.schemaName}.JobRuns WHERE [TriggerId] = @TriggerId";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -314,18 +300,8 @@ namespace Jobbr.Server.MsSql
 
         public bool CheckParallelExecution(long triggerId)
         {
-            var sql = string.Format(
-                "SELECT * FROM {0}.JobRuns WHERE [TriggerId] = @TriggerId AND [State] IN ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}')",
-                this.schemaName,
-                JobRunStates.Collecting,
-                JobRunStates.Connected,
-                JobRunStates.Finishing,
-                JobRunStates.Initializing,
-                JobRunStates.Preparing,
-                JobRunStates.Processing,
-                JobRunStates.Scheduled,
-                JobRunStates.Started,
-                JobRunStates.Starting);
+            var sql =
+                $"SELECT * FROM {this.schemaName}.JobRuns WHERE [TriggerId] = @TriggerId AND [State] IN ('{JobRunStates.Collecting}','{JobRunStates.Connected}','{JobRunStates.Finishing}','{JobRunStates.Initializing}','{JobRunStates.Preparing}','{JobRunStates.Processing}','{JobRunStates.Scheduled}','{JobRunStates.Started}','{JobRunStates.Starting}')";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -335,7 +311,7 @@ namespace Jobbr.Server.MsSql
 
         public List<JobRun> GetJobRunsByState(JobRunStates state)
         {
-            var sql = string.Format("SELECT * FROM {0}.JobRuns WHERE [State] = @State", this.schemaName);
+            var sql = $"SELECT * FROM {this.schemaName}.JobRuns WHERE [State] = @State";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -345,25 +321,25 @@ namespace Jobbr.Server.MsSql
 
         public long AddTrigger(InstantTrigger trigger)
         {
-            return this.InsertTrigger(trigger, InstantTrigger.TypeName, delayedInMinutes: trigger.DelayedMinutes);
+            
+            return this.InsertTrigger(trigger, TriggerType.Instant, delayedInMinutes: trigger.DelayedMinutes);
         }
 
         public long AddTrigger(ScheduledTrigger trigger)
         {
-            return this.InsertTrigger(trigger, ScheduledTrigger.TypeName, startDateTimeUtc: trigger.StartDateTimeUtc,
+            return this.InsertTrigger(trigger, TriggerType.Scheduled, startDateTimeUtc: trigger.StartDateTimeUtc,
                 endDateTimeUtc: trigger.StartDateTimeUtc);
         }
 
         public long AddTrigger(RecurringTrigger trigger)
         {
-            return this.InsertTrigger(trigger, RecurringTrigger.TypeName, trigger.Definition,
+            return this.InsertTrigger(trigger, TriggerType.Recurring, trigger.Definition,
                 noParallelExecution: trigger.NoParallelExecution);
         }
 
         public bool DisableTrigger(long triggerId)
         {
-            var sql = string.Format("UPDATE {0}.Triggers SET [IsActive] = @IsActive WHERE [Id] = @TriggerId",
-                this.schemaName);
+            var sql = $"UPDATE {this.schemaName}.Triggers SET [IsActive] = @IsActive WHERE [Id] = @TriggerId";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -375,8 +351,7 @@ namespace Jobbr.Server.MsSql
 
         public bool EnableTrigger(long triggerId)
         {
-            var sql = string.Format("UPDATE {0}.Triggers SET [IsActive] = @IsActive WHERE [Id] = @TriggerId",
-                this.schemaName);
+            var sql = $"UPDATE {this.schemaName}.Triggers SET [IsActive] = @IsActive WHERE [Id] = @TriggerId";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -393,9 +368,9 @@ namespace Jobbr.Server.MsSql
                   SELECT * FROM {0}.Triggers where TriggerType = '{2}' AND JobId = @JobId
                   SELECT * FROM {0}.Triggers where TriggerType = '{3}' AND JobId = @JobId",
                 this.schemaName,
-                InstantTrigger.TypeName,
-                RecurringTrigger.TypeName,
-                ScheduledTrigger.TypeName);
+                TriggerType.Instant,
+                TriggerType.Recurring,
+                TriggerType.Scheduled);
 
 
             using (var connection = new SqlConnection(this.connectionString))
@@ -424,9 +399,9 @@ namespace Jobbr.Server.MsSql
                       SELECT * FROM {0}.Triggers where TriggerType = '{2}' AND Id = @Id
                       SELECT * FROM {0}.Triggers where TriggerType = '{3}' AND Id = @Id",
                 this.schemaName,
-                InstantTrigger.TypeName,
-                RecurringTrigger.TypeName,
-                ScheduledTrigger.TypeName);
+                TriggerType.Instant,
+                TriggerType.Recurring,
+                TriggerType.Scheduled);
 
             var param = new {Id = triggerId};
 
@@ -440,9 +415,9 @@ namespace Jobbr.Server.MsSql
                   SELECT * FROM {0}.Triggers where TriggerType = '{2}' AND IsActive = 1
                   SELECT * FROM {0}.Triggers where TriggerType = '{3}' AND IsActive = 1",
                 this.schemaName,
-                InstantTrigger.TypeName,
-                RecurringTrigger.TypeName,
-                ScheduledTrigger.TypeName);
+                TriggerType.Instant,
+                TriggerType.Recurring,
+                TriggerType.Scheduled);
 
             var param = new {};
 
@@ -476,11 +451,10 @@ namespace Jobbr.Server.MsSql
         {
             var dateTimeUtcNow = DateTime.UtcNow;
 
-            var sql = string.Format(
-                @"INSERT INTO {0}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedInMinutes],[IsActive],[UserId],[UserName],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
+            var sql =
+                $@"INSERT INTO {this.schemaName}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedInMinutes],[IsActive],[UserId],[UserName],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
                   VALUES (@JobId,@TriggerType,@Definition,@StartDateTimeUtc,@EndDateTimeUtc,@DelayedInMinutes,1,@UserId,@UserName,@UserDisplayName,@Parameters,@Comment,@UtcNow,@NoParallelExecution)
-                  SELECT CAST(SCOPE_IDENTITY() as int)",
-                this.schemaName);
+                  SELECT CAST(SCOPE_IDENTITY() as int)";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -514,10 +488,7 @@ namespace Jobbr.Server.MsSql
         private bool UpdateTrigger(JobTriggerBase trigger, string definition = "", DateTime? startDateTimeUtc = null,
             DateTime? endDateTimeUtc = null, int delayedInMinutes = 0)
         {
-            var dateTimeUtcNow = DateTime.UtcNow;
-
-            var sql = string.Format(
-                @"UPDATE {0}.[Triggers]
+            var sql = $@"UPDATE {this.schemaName}.[Triggers]
                   SET [Definition] = @Definition
                      ,[StartDateTimeUtc] = @StartDateTimeUtc
                      ,[EndDateTimeUtc] = @EndDateTimeUtc
@@ -528,8 +499,7 @@ namespace Jobbr.Server.MsSql
                      ,[UserDisplayName] = @UserDisplayName
                      ,[Parameters] = @Parameters
                      ,[Comment] = @Comment
-                 WHERE Id = @Id",
-                this.schemaName);
+                 WHERE Id = @Id";
 
             using (var connection = new SqlConnection(this.connectionString))
             {
@@ -553,6 +523,11 @@ namespace Jobbr.Server.MsSql
 
                 return true;
             }
+        }
+
+        public JobRun GetJobRunById(Guid uniqueId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

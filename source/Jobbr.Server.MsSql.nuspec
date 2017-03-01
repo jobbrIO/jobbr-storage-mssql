@@ -8,12 +8,13 @@
     <projectUrl>http://github.com/jobbrIO/jobbr-storage-mssql</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Jobbr is a .NET JobServer</description>
-    <copyright>Copyright 2016</copyright>
+    <copyright>Copyright 2017</copyright>
     <dependencies>
     </dependencies>
   </metadata>
   <files>
-    <file src="tools\Jobbr.Server.MsSql.dll" target="lib\net45"/>
-    <file src="tools\Jobbr.Server.MsSql.pdb" target="lib\net45"/>
+    <file src="..\ilmerged\Jobbr.Server.MsSql.dll" target="lib\net45"/>
+    <file src="..\ilmerged\Jobbr.Server.MsSql.pdb" target="lib\net45"/>
+    <file src="Jobbr.Server.MsSql\CreateSchemaAndTables.sql" target=""/>
   </files>
 </package>

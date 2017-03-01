@@ -1,4 +1,0 @@
-[submodule "source/submodules/jobbr-cm-jobstorage"]
-	path = source/submodules/jobbr-cm-jobstorage
-	url = https://github.com/jobbrIO/jobbr-cm-jobstorage
-	branch = develop

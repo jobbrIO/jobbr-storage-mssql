@@ -26,7 +26,7 @@ build:
 after_build:
   - cmd: nuget install ILMerge -ExcludeVersion
   - cmd: mkdir ilmerged
-  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/Jobbr.Server.MsSql.dll source/Jobbr.Server.MsSql/bin/Release/*.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
+  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/Jobbr.Server.MsSql.dll source/Jobbr.Server.MsSql/bin/Release/Dapper.dll source/Jobbr.Server.MsSql/bin/Release/Jobbr.Server.MsSql.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
   - cmd: nuget pack source\Jobbr.Server.MsSql.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
   - cmd: appveyor PushArtifact "Jobbr.Server.MsSql.%GitVersion_NuGetVersion%.nupkg"
 

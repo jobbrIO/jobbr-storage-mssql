@@ -51,20 +51,24 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public JobRun GetLastJobRunByTriggerId(long triggerId)
+        public JobRun GetLastJobRunByTriggerId(long triggerId, DateTime utcNow)
         {
             var sql =
-                $"SELECT TOP 1 * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId ORDER BY [PlannedStartDateTimeUtc] DESC";
+                $"SELECT TOP 1 * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId AND [ActualStartDateTimeUtc] < @DateTimeNowUtc ORDER BY [ActualStartDateTimeUtc] DESC";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                var jobRuns = connection.Query<JobRun>(sql, new {TriggerId = triggerId}).ToList();
+                var jobRuns = connection.Query<JobRun>(sql, new
+                {
+                    TriggerId = triggerId,
+                    DateTimeNowUtc = utcNow
+                }).ToList();
 
                 return jobRuns.Any() ? jobRuns.FirstOrDefault() : null;
             }
         }
 
-        public JobRun GetFutureJobRunsByTriggerId(long triggerId)
+        public JobRun GetNextJobRunByTriggerId(long triggerId, DateTime utcNow)
         {
             var sql =
                 $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId AND PlannedStartDateTimeUtc >= @DateTimeNowUtc AND State = @State ORDER BY [PlannedStartDateTimeUtc] ASC";
@@ -76,7 +80,7 @@ namespace Jobbr.Server.MsSql
                         new
                         {
                             TriggerId = triggerId,
-                            DateTimeNowUtc = DateTime.UtcNow,
+                            DateTimeNowUtc = utcNow,
                             State = JobRunStates.Scheduled.ToString()
                         }).ToList();
 

@@ -208,7 +208,7 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public List<JobRun> GetJobRunsForUserId(long userId)
+        public List<JobRun> GetJobRunsByUserId(long userId)
         {
             var sql =
                 string.Format(
@@ -221,7 +221,7 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public List<JobRun> GetJobRunsForUserName(string userName)
+        public List<JobRun> GetJobRunsByUserName(string userName)
         {
             var sql =
                 string.Format(

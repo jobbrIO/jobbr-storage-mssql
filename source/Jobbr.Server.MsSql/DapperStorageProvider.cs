@@ -521,10 +521,5 @@ namespace Jobbr.Server.MsSql
                 return true;
             }
         }
-
-        public JobRun GetJobRunById(Guid uniqueId)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

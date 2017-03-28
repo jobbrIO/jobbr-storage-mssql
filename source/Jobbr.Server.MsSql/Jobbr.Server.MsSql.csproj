@@ -61,7 +61,9 @@
     <Compile Include="TriggerType.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CreateSchemaAndTables.sql" />
+    <None Include="CreateSchemaAndTables.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

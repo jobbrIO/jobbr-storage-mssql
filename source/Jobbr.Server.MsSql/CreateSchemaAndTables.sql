@@ -1,9 +1,5 @@
-﻿/* EXECUTE this manually in your DB */
-
-/****** Object:  Schema [Jobbr]    Script Date: 18.03.2015 19:33:04 ******/
-CREATE SCHEMA [Jobbr]
+﻿CREATE SCHEMA [Jobbr]
 GO
-/****** Object:  Table [Jobbr].[JobRuns]    Script Date: 18.03.2015 19:33:04 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -36,7 +32,6 @@ CREATE TABLE [Jobbr].[JobRuns](
 GO
 SET ANSI_PADDING OFF
 GO
-/****** Object:  Table [Jobbr].[Jobs]    Script Date: 18.03.2015 19:33:04 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -60,7 +55,6 @@ CREATE TABLE [Jobbr].[Jobs](
 GO
 SET ANSI_PADDING OFF
 GO
-/****** Object:  Table [Jobbr].[Triggers]    Script Date: 18.03.2015 19:33:04 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

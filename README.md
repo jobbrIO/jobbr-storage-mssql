@@ -37,9 +37,9 @@ builder.AddMsSqlStorage(config =>
 
 server.Start();
 ```
+
 ### Database-Schema
 The extensions assumes that there are already all related tables in the referenced database. Please make sure that these tables are created by using the script located on [source/Jobbr.Server.MsSql/CreateSchemaAndTables.sql](source/Jobbr.Server.MsSql/CreateSchemaAndTables.sql).
-
 
 # License
 This software is licenced under GPLv3. See [LICENSE](LICENSE), and the related licences of 3rd party libraries below.
@@ -47,8 +47,10 @@ This software is licenced under GPLv3. See [LICENSE](LICENSE), and the related l
 # Acknowledgements
 This extension is built using the following great open source projects
 
-* [MimeTypeMap](https://github.com/samuelneff/MimeTypeMap) 
-  [(MIT)](https://github.com/samuelneff/MimeTypeMap/blob/master/LICENSE.txt)
+* [Dapper](https://github.com/StackExchange/Dapper) 
+  [(Apache-2.0)](https://github.com/StackExchange/Dapper/blob/master/License.txt)
+* [LibLog](https://github.com/damianh/LibLog) 
+  [(MIT)](https://github.com/damianh/LibLog/blob/master/licence.txt)
 
 
 

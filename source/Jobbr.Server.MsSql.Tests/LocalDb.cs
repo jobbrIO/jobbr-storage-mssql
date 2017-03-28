@@ -80,7 +80,7 @@ namespace Jobbr.Server.MsSql.Tests
             }
         }
 
-        private void DeleteDatabaseFiles()
+        public void DeleteDatabaseFiles()
         {
             if (File.Exists(DatabaseMdfPath)) File.Delete(DatabaseMdfPath);
             if (File.Exists(DatabaseLogPath)) File.Delete(DatabaseLogPath);

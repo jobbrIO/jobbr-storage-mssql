@@ -10,7 +10,6 @@ CREATE TABLE [Jobbr].[JobRuns](
 	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[JobId] [bigint] NOT NULL,
 	[TriggerId] [bigint] NOT NULL,
-	[UniqueId] [char](36) NOT NULL,
 	[JobParameters] [varchar](max) NULL,
 	[InstanceParameters] [varchar](max) NULL,
 	[Name] [varchar](50) NULL,

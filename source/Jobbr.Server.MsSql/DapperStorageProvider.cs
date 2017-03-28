@@ -27,7 +27,7 @@ namespace Jobbr.Server.MsSql
 
         public List<Job> GetJobs(int page = 0, int pageSize = 50)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.Jobs ORDER BY PlannedStartDateTimeUtc ASC OFFSET {page} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            var sql = $"SELECT * FROM {this._configuration.Schema}.Jobs ORDER BY CreatedDateTimeUtc ASC OFFSET {page} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
@@ -86,8 +86,8 @@ namespace Jobbr.Server.MsSql
         public void AddJobRun(JobRun jobRun)
         {
             var sql =
-                $@"INSERT INTO {this._configuration.Schema}.JobRuns ([JobId],[TriggerId],[UniqueId],[JobParameters],[InstanceParameters],[PlannedStartDateTimeUtc],[State])
-                          VALUES (@JobId,@TriggerId,@UniqueId,@JobParameters,@InstanceParameters,@PlannedStartDateTimeUtc,@State)
+                $@"INSERT INTO {this._configuration.Schema}.JobRuns ([JobId],[TriggerId],[JobParameters],[InstanceParameters],[PlannedStartDateTimeUtc],[ActualStartDateTimeUtc],[State])
+                          VALUES (@JobId,@TriggerId,@JobParameters,@InstanceParameters,@PlannedStartDateTimeUtc,@ActualStartDateTimeUtc,@State)
                           SELECT CAST(SCOPE_IDENTITY() as int)";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
@@ -100,7 +100,8 @@ namespace Jobbr.Server.MsSql
                         jobRun.JobParameters,
                         jobRun.InstanceParameters,
                         jobRun.PlannedStartDateTimeUtc,
-                        State = jobRun.State.ToString()
+                        State = jobRun.State.ToString(),
+                        ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc
                     };
 
                 var id = connection.Query<int>(sql, jobRunObject).Single();
@@ -209,11 +210,11 @@ namespace Jobbr.Server.MsSql
 
         public List<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, long page = 0, long pageSize = 50)
         {
-            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserName = @UserName ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserDisplayName = @UserDisplayName ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                return connection.Query<JobRun>(sql, new {UserName = userDisplayName }).ToList();
+                return connection.Query<JobRun>(sql, new {UserDisplayName = userDisplayName }).ToList();
             }
         }
 
@@ -402,8 +403,8 @@ namespace Jobbr.Server.MsSql
             var dateTimeUtcNow = DateTime.UtcNow;
 
             var sql =
-                $@"INSERT INTO {this._configuration.Schema}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedInMinutes],[IsActive],[UserId],[UserName],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
-                  VALUES (@JobId,@TriggerType,@Definition,@StartDateTimeUtc,@EndDateTimeUtc,@DelayedInMinutes,1,@UserId,@UserName,@UserDisplayName,@Parameters,@Comment,@UtcNow,@NoParallelExecution)
+                $@"INSERT INTO {this._configuration.Schema}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedInMinutes],[IsActive],[UserId],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
+                  VALUES (@JobId,@TriggerType,@Definition,@StartDateTimeUtc,@EndDateTimeUtc,@DelayedInMinutes,@IsActive,@UserId,@UserDisplayName,@Parameters,@Comment,@UtcNow,@NoParallelExecution)
                   SELECT CAST(SCOPE_IDENTITY() as int)";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))

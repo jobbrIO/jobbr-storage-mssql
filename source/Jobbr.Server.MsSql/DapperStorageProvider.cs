@@ -101,7 +101,7 @@ namespace Jobbr.Server.MsSql
                         jobRun.InstanceParameters,
                         jobRun.PlannedStartDateTimeUtc,
                         State = jobRun.State.ToString(),
-                        ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc
+                        jobRun.ActualStartDateTimeUtc
                     };
 
                 var id = connection.Query<int>(sql, jobRunObject).Single();

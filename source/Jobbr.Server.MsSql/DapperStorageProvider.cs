@@ -143,9 +143,7 @@ namespace Jobbr.Server.MsSql
                                         [ActualEndDateTimeUtc] = @ActualEndDateTimeUtc,
                                         [Progress] = @Progress,
                                         [State] = @State,
-                                        [Pid] = @Pid,
-                                        [WorkingDir] = @WorkingDir,
-                                        [TempDir] = @TempDir
+                                        [Pid] = @Pid
                                     WHERE [Id] = @Id";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
@@ -443,7 +441,6 @@ namespace Jobbr.Server.MsSql
                      ,[DelayedInMinutes] = @DelayedInMinutes
                      ,[IsActive] = @IsActive
                      ,[UserId] = @UserId
-                     ,[UserName] = @UserName
                      ,[UserDisplayName] = @UserDisplayName
                      ,[Parameters] = @Parameters
                      ,[Comment] = @Comment
@@ -474,7 +471,14 @@ namespace Jobbr.Server.MsSql
 
         public bool IsAvailable()
         {
-            this.GetJobs(0, 1);
+            try
+            {
+                this.GetJobs(0, 1);
+            }
+            catch
+            {
+                return false;
+            }
 
             return true;
         }

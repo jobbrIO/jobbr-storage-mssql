@@ -15,20 +15,33 @@ namespace Jobbr.Server.MsSql.Tests
         public string DatabaseMdfPath { get; private set; }
         public string DatabaseLogPath { get; private set; }
 
+        static LocalDb()
+        {
+            try
+            {
+                Directory.Delete(GetOutputFolder(), true);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
         public LocalDb(string databaseName = null)
         {
             DatabaseName = string.IsNullOrWhiteSpace(databaseName) ? Guid.NewGuid().ToString("N") : databaseName;
             CreateDatabase();
         }
 
-        public SqlConnection OpenConnection()
+        public SqlConnection CreateSqlConnection()
         {
             return new SqlConnection(ConnectionStringName);
         }
 
         private void CreateDatabase()
         {
-            OutputFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), DatabaseDirectory);
+            // ReSharper disable once AssignNullToNotNullAttribute
+            OutputFolder = GetOutputFolder();
             var mdfFilename = $"{DatabaseName}.mdf";
             DatabaseMdfPath = Path.Combine(OutputFolder, mdfFilename);
             DatabaseLogPath = Path.Combine(OutputFolder, $"{DatabaseName}_log.ldf");
@@ -54,6 +67,12 @@ namespace Jobbr.Server.MsSql.Tests
             }
 
             ConnectionStringName = $@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDBFileName={DatabaseMdfPath};Initial Catalog={DatabaseName};Integrated Security=True;";
+        }
+
+        private static string GetOutputFolder()
+        {
+            // ReSharper disable once AssignNullToNotNullAttribute
+            return Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), DatabaseDirectory);
         }
 
         private void DetachDatabase()

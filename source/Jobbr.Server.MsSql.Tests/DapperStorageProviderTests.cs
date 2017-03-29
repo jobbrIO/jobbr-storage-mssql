@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using Dapper;
 using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -18,7 +20,7 @@ namespace Jobbr.Server.MsSql.Tests
         public void Initialize()
         {
             _localDb = new LocalDb();
-            _sqlConnection = _localDb.OpenConnection();
+            _sqlConnection = _localDb.CreateSqlConnection();
             _sqlConnection.Open();
 
             var sqlStatements = SqlHelper.SplitSqlStatements(File.ReadAllText("CreateSchemaAndTables.sql")).ToList();
@@ -95,8 +97,8 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenTwoJobs_WhenQueryingPaged_ResultIsPaged()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
-            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
 
             _storageProvider.AddJob(job1);
             _storageProvider.AddJob(job2);
@@ -110,8 +112,8 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenSomeTriggers_WhenQueryingForActiveTriggers_AllActiveTriggersAreReturned()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
-            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
 
             _storageProvider.AddJob(job1);
             _storageProvider.AddJob(job2);
@@ -132,7 +134,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenJobRun_WhenQueryingById_IsReturned()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -152,7 +154,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenTwoJobRuns_WhenQueryingPaged_ResultIsPaged()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -178,7 +180,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenTwoJobRuns_WhenQueryingForSpecificState_OnlyThoseJobRunsAreReturned()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -202,7 +204,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenThreeJobRuns_WhenQueryingForSpecificStatePaged_ResultIsPaged()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -230,7 +232,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenThreeJobRuns_WhenQueryingByTrigger_AllJobRunsOfTriggerAreReturned()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -254,7 +256,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenThreeJobRuns_WhenQueryingByTriggerPaged_ResultIsPaged()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -278,7 +280,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenThreeJobRunsOfChefkoch_WhenQueryingByUserDisplayName_ReturnsOnlyJobRunsOfThatUser()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -302,7 +304,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenThreeJobRunsOfChefkoch_WhenQueryingByUserDisplayNamePaged_ResultIsPaged()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -326,7 +328,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenThreeJobRunsOfozu_WhenQueryingByUserId_ReturnsOnlyJobRunsOfozu()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -350,7 +352,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenThreeJobRunsOfozu_WhenQueryingByUserIdPaged_ResultIsPaged()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -374,7 +376,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenEnabledTrigger_WhenDisabling_TriggerIsDisabled()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -392,7 +394,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenDisabledTrigger_WhenEnabling_TriggerIsEnabled()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -409,7 +411,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenJobRuns_WhenQueryingForLastJobRunByTrigger_LastJobRunIsReturned()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -435,7 +437,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenJobRuns_WhenQueryingForNextJobRunByTrigger_NextJobRunIsReturned()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -458,9 +460,9 @@ namespace Jobbr.Server.MsSql.Tests
         }
 
         [TestMethod]
-        public void GivenJobRun_WhenUpadingProgress_ProgressIsUpdated()
+        public void GivenJobRun_WhenUpdatingProgress_ProgressIsUpdated()
         {
-            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", CreatedDateTimeUtc = DateTime.UtcNow };
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
             _storageProvider.AddJob(job1);
 
@@ -479,6 +481,183 @@ namespace Jobbr.Server.MsSql.Tests
             var jobRun2 = _storageProvider.GetJobRunById(jobRun1.Id);
 
             Assert.AreEqual(50, jobRun2.Progress);
+        }
+
+        [TestMethod]
+        public void GivenJob_WhenUpdating_JobIsUpdated()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            _storageProvider.AddJob(job1);
+
+            job1.UniqueName = "test-uniquename";
+            job1.Title = "test-title";
+            job1.Type = "test-type";
+            job1.Parameters = "test-parameters";
+           
+            _storageProvider.Update(job1);
+
+            var job1Reloaded = _storageProvider.GetJobById(job1.Id);
+
+            Assert.AreEqual("test-uniquename", job1Reloaded.UniqueName);
+            Assert.AreEqual("test-title", job1Reloaded.Title);
+            Assert.AreEqual("test-type", job1Reloaded.Type);
+            Assert.AreEqual("test-parameters", job1Reloaded.Parameters);
+        }
+
+        [TestMethod]
+        public void GivenJobRun_WhenUpdating_JobRunIsUpdated()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            _storageProvider.AddJob(job1);
+
+            var trigger = new InstantTrigger {IsActive = true};
+
+            _storageProvider.AddTrigger(job1.Id, trigger);
+
+            var jobRun = new JobRun {JobId = job1.Id, TriggerId = trigger.Id, PlannedStartDateTimeUtc = DateTime.UtcNow};
+
+            _storageProvider.AddJobRun(jobRun);
+
+            var newPlannedStartDate = DateTime.UtcNow;
+            var newActualStartDate = newPlannedStartDate.AddSeconds(1);
+            var newEstimatedStartDate = newPlannedStartDate.AddMilliseconds(1);
+            var newActualEndDate = newPlannedStartDate.AddMinutes(1);
+
+            jobRun.JobParameters = "test-jobparameters";
+            jobRun.InstanceParameters = "test-instanceparameters";
+            jobRun.PlannedStartDateTimeUtc = newPlannedStartDate;
+            jobRun.ActualStartDateTimeUtc = newActualStartDate;
+            jobRun.EstimatedEndDateTimeUtc = newEstimatedStartDate;
+            jobRun.ActualEndDateTimeUtc = newActualEndDate;
+
+            _storageProvider.Update(jobRun);
+
+            var job1Reloaded = _storageProvider.GetJobRunById(job1.Id);
+
+            Assert.AreEqual("test-jobparameters", job1Reloaded.JobParameters);
+            Assert.AreEqual("test-instanceparameters", job1Reloaded.InstanceParameters);
+            Assert.AreEqual(newPlannedStartDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.PlannedStartDateTimeUtc.ToString(CultureInfo.InvariantCulture));
+            Assert.AreEqual(newActualStartDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.ActualStartDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+            Assert.AreEqual(newEstimatedStartDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.EstimatedEndDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+            Assert.AreEqual(newActualEndDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.ActualEndDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+        }
+
+        [TestMethod]
+        public void GivenInstantTrigger_WhenUpdating_TriggerIsUpdated()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            _storageProvider.AddJob(job1);
+
+            var trigger = new InstantTrigger();
+
+            _storageProvider.AddTrigger(job1.Id, trigger);
+
+            var trigger2 = (InstantTrigger)_storageProvider.GetTriggerById(job1.Id, trigger.Id);
+            trigger2.Comment = "bla";
+            trigger2.IsActive = true;
+            trigger2.Parameters = "test-parameters";
+            trigger2.UserId = "ozu";
+            trigger2.DelayedMinutes = 5;
+
+            _storageProvider.Update(job1.Id, trigger2);
+
+            var trigger2Reloaded = (InstantTrigger)_storageProvider.GetTriggerById(job1.Id, trigger2.Id);
+    
+            Assert.AreEqual("bla", trigger2Reloaded.Comment);
+            Assert.IsTrue(trigger2Reloaded.IsActive);
+            Assert.AreEqual("test-parameters", trigger2Reloaded.Parameters);
+            Assert.AreEqual("ozu", trigger2Reloaded.UserId);
+            Assert.AreEqual(5, trigger2Reloaded.DelayedMinutes);
+        }
+
+        [TestMethod]
+        public void GivenScheduledTrigger_WhenUpdating_TriggerIsUpdated()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            _storageProvider.AddJob(job1);
+
+            var trigger = new ScheduledTrigger();
+
+            _storageProvider.AddTrigger(job1.Id, trigger);
+
+            var trigger2 = (ScheduledTrigger)_storageProvider.GetTriggerById(job1.Id, trigger.Id);
+
+            var startDateTime = DateTime.UtcNow.AddHours(5);
+
+            trigger2.Comment = "bla";
+            trigger2.IsActive = true;
+            trigger2.Parameters = "test-parameters";
+            trigger2.UserId = "ozu";
+            trigger2.StartDateTimeUtc = startDateTime;
+
+            _storageProvider.Update(job1.Id, trigger2);
+
+            var trigger2Reloaded = (ScheduledTrigger)_storageProvider.GetTriggerById(job1.Id, trigger2.Id);
+
+            Assert.AreEqual("bla", trigger2Reloaded.Comment);
+            Assert.IsTrue(trigger2Reloaded.IsActive);
+            Assert.AreEqual("test-parameters", trigger2Reloaded.Parameters);
+            Assert.AreEqual("ozu", trigger2Reloaded.UserId);
+            Assert.AreEqual(startDateTime.ToString(CultureInfo.InvariantCulture), trigger2Reloaded.StartDateTimeUtc.ToString(CultureInfo.InvariantCulture));
+        }
+
+        [TestMethod]
+        public void GivenRecurringTrigger_WhenUpdating_TriggerIsUpdated()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            _storageProvider.AddJob(job1);
+
+            var trigger = new RecurringTrigger();
+
+            _storageProvider.AddTrigger(job1.Id, trigger);
+
+            var trigger2 = (RecurringTrigger)_storageProvider.GetTriggerById(job1.Id, trigger.Id);
+
+            var startDateTime = DateTime.UtcNow.AddHours(5);
+            var endDateTime = DateTime.UtcNow.AddHours(7);
+
+            trigger2.Comment = "bla";
+            trigger2.IsActive = true;
+            trigger2.Parameters = "test-parameters";
+            trigger2.UserId = "ozu";
+            trigger2.StartDateTimeUtc = startDateTime;
+            trigger2.Definition = "* * * * *";
+            trigger2.EndDateTimeUtc = endDateTime;
+            trigger2.NoParallelExecution = true;
+
+            _storageProvider.Update(job1.Id, trigger2);
+
+            var trigger2Reloaded = (RecurringTrigger)_storageProvider.GetTriggerById(job1.Id, trigger2.Id);
+
+            Assert.AreEqual("bla", trigger2Reloaded.Comment);
+            Assert.IsTrue(trigger2Reloaded.IsActive);
+            Assert.AreEqual("test-parameters", trigger2Reloaded.Parameters);
+            Assert.AreEqual("ozu", trigger2Reloaded.UserId);
+            Assert.AreEqual(startDateTime.ToString(CultureInfo.InvariantCulture), trigger2Reloaded.StartDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+            Assert.AreEqual(endDateTime.ToString(CultureInfo.InvariantCulture), trigger2Reloaded.EndDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+            Assert.AreEqual("* * * * *", trigger2Reloaded.Definition);
+            Assert.IsTrue(trigger2Reloaded.NoParallelExecution);
+        }
+
+        [TestMethod]
+        public void GivenRunningDatabase_WhenCheckingAvailability_IsAvailable()
+        {
+            Assert.IsTrue(_storageProvider.IsAvailable());
+        }
+
+        [TestMethod]
+        public void GivenNonRunningDatabase_WhenCheckingAvailability_IsAvailable()
+        {
+            var cmd = _sqlConnection.CreateCommand();
+            cmd.CommandText = $"DROP TABLE Jobbr.Jobs;";
+            cmd.ExecuteNonQuery();
+
+            Assert.IsFalse(_storageProvider.IsAvailable());
         }
     }
 }

@@ -2,10 +2,10 @@ namespace Jobbr.Server.MsSql
 {
     public static class TriggerType
     {
-        public static string Instant = "Instant";
+        public const string Instant = "Instant";
 
-        public static string Recurring = "Recurring";
+        public const string Recurring = "Recurring";
 
-        public static string Scheduled = "Scheduled";
+        public const string Scheduled = "Scheduled";
     }
 }

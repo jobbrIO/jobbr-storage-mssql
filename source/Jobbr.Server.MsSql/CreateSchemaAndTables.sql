@@ -67,7 +67,7 @@ CREATE TABLE [Jobbr].[Triggers](
 	[Definition] [varchar](20) NULL,
 	[StartDateTimeUtc] [datetime2](7) NULL,
 	[EndDateTimeUtc] [datetime2](7) NULL,
-	[DelayedInMinutes] [int] NULL,
+	[DelayedMinutes] [int] NULL,
 	[IsActive] [bit] NOT NULL,
 	[UserId] [varchar](100) NULL,
 	[UserDisplayName] [varchar](100) NULL,

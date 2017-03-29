@@ -244,17 +244,56 @@ namespace Jobbr.Server.MsSql
 
         public void Update(long jobId, InstantTrigger trigger)
         {
-            this.UpdateTrigger(trigger, delayedInMinutes: trigger.DelayedMinutes);
+            var sql = $@"UPDATE {this._configuration.Schema}.[Triggers]
+                  SET [IsActive] = @IsActive
+                     ,[UserId] = @UserId
+                     ,[UserDisplayName] = @UserDisplayName
+                     ,[Parameters] = @Parameters
+                     ,[Comment] = @Comment
+                     ,[DelayedMinutes] = @DelayedMinutes
+                 WHERE Id = @Id";
+
+            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            {
+                connection.Execute(sql, trigger);
+            }
         }
 
         public void Update(long jobId, ScheduledTrigger trigger)
         {
-            this.UpdateTrigger(trigger, startDateTimeUtc: trigger.StartDateTimeUtc, endDateTimeUtc: trigger.StartDateTimeUtc);
+            var sql = $@"UPDATE {this._configuration.Schema}.[Triggers]
+                  SET [IsActive] = @IsActive
+                     ,[UserId] = @UserId
+                     ,[UserDisplayName] = @UserDisplayName
+                     ,[Parameters] = @Parameters
+                     ,[Comment] = @Comment
+                     ,[StartDateTimeUtc] = @StartDateTimeUtc
+                 WHERE Id = @Id";
+
+            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            {
+                connection.Execute(sql, trigger);
+            }
         }
 
         public void Update(long jobId, RecurringTrigger trigger)
         {
-            this.UpdateTrigger(trigger, trigger.Definition);
+            var sql = $@"UPDATE {this._configuration.Schema}.[Triggers]
+                  SET [IsActive] = @IsActive
+                     ,[UserId] = @UserId
+                     ,[UserDisplayName] = @UserDisplayName
+                     ,[Parameters] = @Parameters
+                     ,[Comment] = @Comment
+                     ,[StartDateTimeUtc] = @StartDateTimeUtc
+                     ,[EndDateTimeUtc] = @EndDateTimeUtc
+                     ,[Definition] = @Definition
+                     ,[NoParallelExecution] = @NoParallelExecution
+                 WHERE Id = @Id";
+
+            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            {
+                connection.Execute(sql, trigger);
+            }
         }
 
         public List<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, long page = 0, long pageSize = 50)
@@ -280,7 +319,7 @@ namespace Jobbr.Server.MsSql
         public void AddTrigger(long jobId, InstantTrigger trigger)
         {
             trigger.JobId = jobId;
-            this.InsertTrigger(trigger, TriggerType.Instant, delayedInMinutes: trigger.DelayedMinutes);
+            this.InsertTrigger(trigger, TriggerType.Instant, DelayedMinutes: trigger.DelayedMinutes);
         }
 
         public void AddTrigger(long jobId, ScheduledTrigger trigger)
@@ -348,18 +387,44 @@ namespace Jobbr.Server.MsSql
 
         public JobTriggerBase GetTriggerById(long jobId, long triggerId)
         {
-            var sql = string.Format(
-                @"SELECT * FROM {0}.Triggers where TriggerType = '{1}' AND Id = @Id
-                      SELECT * FROM {0}.Triggers where TriggerType = '{2}' AND Id = @Id
-                      SELECT * FROM {0}.Triggers where TriggerType = '{3}' AND Id = @Id",
-                this._configuration.Schema,
-                TriggerType.Instant,
-                TriggerType.Recurring,
-                TriggerType.Scheduled);
+            var sql = $@"SELECT * FROM {this._configuration.Schema}.Triggers WHERE Id = @Id";
+            var param = new { Id = triggerId };
 
-            var param = new {Id = triggerId};
+            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            {
+                using (var reader = connection.ExecuteReader(sql, param))
+                {
+                    var instantTriggerParser = reader.GetRowParser<JobTriggerBase>(typeof(InstantTrigger));
+                    var scheduledTriggerParser = reader.GetRowParser<JobTriggerBase>(typeof(ScheduledTrigger));
+                    var recurringTriggerParser = reader.GetRowParser<JobTriggerBase>(typeof(RecurringTrigger));
 
-            return this.ExecuteSelectTriggerQuery(sql, param).FirstOrDefault();
+                    var triggerTypeColumnIndex = reader.GetOrdinal("TriggerType");
+
+                    JobTriggerBase trigger = null;
+
+                    if (reader.Read())
+                    {
+                        var triggerType = reader.GetString(triggerTypeColumnIndex);
+                        
+                        switch (triggerType)
+                        {
+                            case TriggerType.Instant:
+                                trigger = instantTriggerParser(reader);
+                                break;
+
+                            case TriggerType.Scheduled:
+                                trigger = scheduledTriggerParser(reader);
+                                break;
+
+                            case TriggerType.Recurring:
+                                trigger = recurringTriggerParser(reader);
+                                break;
+                        }
+                    }
+
+                    return trigger;
+                }
+            }
         }
 
         public List<JobTriggerBase> GetActiveTriggers()
@@ -399,13 +464,13 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        private void InsertTrigger(JobTriggerBase trigger, string type, string definition = "", DateTime? startDateTimeUtc = null, DateTime? endDateTimeUtc = null, int delayedInMinutes = 0, bool noParallelExecution = false)
+        private void InsertTrigger(JobTriggerBase trigger, string type, string definition = "", DateTime? startDateTimeUtc = null, DateTime? endDateTimeUtc = null, int DelayedMinutes = 0, bool noParallelExecution = false)
         {
             var dateTimeUtcNow = DateTime.UtcNow;
 
             var sql =
-                $@"INSERT INTO {this._configuration.Schema}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedInMinutes],[IsActive],[UserId],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
-                  VALUES (@JobId,@TriggerType,@Definition,@StartDateTimeUtc,@EndDateTimeUtc,@DelayedInMinutes,@IsActive,@UserId,@UserDisplayName,@Parameters,@Comment,@UtcNow,@NoParallelExecution)
+                $@"INSERT INTO {this._configuration.Schema}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedMinutes],[IsActive],[UserId],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
+                  VALUES (@JobId,@TriggerType,@Definition,@StartDateTimeUtc,@EndDateTimeUtc,@DelayedMinutes,@IsActive,@UserId,@UserDisplayName,@Parameters,@Comment,@UtcNow,@NoParallelExecution)
                   SELECT CAST(SCOPE_IDENTITY() as int)";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
@@ -418,7 +483,7 @@ namespace Jobbr.Server.MsSql
                         Definition = definition,
                         StartDateTimeUtc = startDateTimeUtc,
                         EndDateTimeUtc = endDateTimeUtc,
-                        DelayedInMinutes = delayedInMinutes,
+                        DelayedMinutes,
                         trigger.IsActive,
                         trigger.UserId,
                         trigger.UserDisplayName,
@@ -431,44 +496,6 @@ namespace Jobbr.Server.MsSql
                 var id = connection.Query<int>(sql, triggerObject).Single();
                 trigger.CreatedDateTimeUtc = dateTimeUtcNow;
                 trigger.Id = id;
-            }
-        }
-
-        private bool UpdateTrigger(JobTriggerBase trigger, string definition = "", DateTime? startDateTimeUtc = null,
-            DateTime? endDateTimeUtc = null, int delayedInMinutes = 0)
-        {
-            var sql = $@"UPDATE {this._configuration.Schema}.[Triggers]
-                  SET [Definition] = @Definition
-                     ,[StartDateTimeUtc] = @StartDateTimeUtc
-                     ,[EndDateTimeUtc] = @EndDateTimeUtc
-                     ,[DelayedInMinutes] = @DelayedInMinutes
-                     ,[IsActive] = @IsActive
-                     ,[UserId] = @UserId
-                     ,[UserDisplayName] = @UserDisplayName
-                     ,[Parameters] = @Parameters
-                     ,[Comment] = @Comment
-                 WHERE Id = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                var triggerObject =
-                    new
-                    {
-                        trigger.Id,
-                        Definition = definition,
-                        StartDateTimeUtc = startDateTimeUtc,
-                        EndDateTimeUtc = endDateTimeUtc,
-                        DelayedInMinutes = delayedInMinutes,
-                        trigger.IsActive,
-                        trigger.UserId,
-                        trigger.UserDisplayName,
-                        trigger.Parameters,
-                        trigger.Comment,
-                    };
-
-                connection.Execute(sql, triggerObject);
-
-                return true;
             }
         }
 

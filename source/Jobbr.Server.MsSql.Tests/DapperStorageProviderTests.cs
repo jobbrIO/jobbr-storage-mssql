@@ -3,7 +3,6 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Dapper;
 using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -132,6 +131,30 @@ namespace Jobbr.Server.MsSql.Tests
             var activeTriggers = _storageProvider.GetActiveTriggers();
 
             Assert.AreEqual(2, activeTriggers.Count);
+        }
+
+        [TestMethod]
+        public void GivenSomeTriggers_WhenQueryingTriggersByJobId_OnlyTriggersOfThatJobAreReturned()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+
+            _storageProvider.AddJob(job1);
+            _storageProvider.AddJob(job2);
+
+            var trigger1 = new InstantTrigger();
+            var trigger2 = new InstantTrigger();
+            var trigger3 = new InstantTrigger();
+
+            _storageProvider.AddTrigger(job1.Id, trigger1);
+            _storageProvider.AddTrigger(job1.Id, trigger2);
+            _storageProvider.AddTrigger(job2.Id, trigger3);
+
+            var triggersOfJob1 = _storageProvider.GetTriggersByJobId(job1.Id);
+            var triggersOfJob2 = _storageProvider.GetTriggersByJobId(job2.Id);
+
+            Assert.AreEqual(2, triggersOfJob1.Count);
+            Assert.AreEqual(1, triggersOfJob2.Count);
         }
 
         [TestMethod]
@@ -583,7 +606,7 @@ namespace Jobbr.Server.MsSql.Tests
 
             _storageProvider.AddJob(job1);
 
-            var trigger = new ScheduledTrigger();
+            var trigger = new ScheduledTrigger {StartDateTimeUtc = DateTime.UtcNow};
 
             _storageProvider.AddTrigger(job1.Id, trigger);
 

@@ -279,16 +279,19 @@ namespace Jobbr.Server.MsSql
 
         public void AddTrigger(long jobId, InstantTrigger trigger)
         {
+            trigger.JobId = jobId;
             this.InsertTrigger(trigger, TriggerType.Instant, delayedInMinutes: trigger.DelayedMinutes);
         }
 
         public void AddTrigger(long jobId, ScheduledTrigger trigger)
         {
+            trigger.JobId = jobId;
             this.InsertTrigger(trigger, TriggerType.Scheduled, startDateTimeUtc: trigger.StartDateTimeUtc, endDateTimeUtc: trigger.StartDateTimeUtc);
         }
 
         public void AddTrigger(long jobId, RecurringTrigger trigger)
         {
+            trigger.JobId = jobId;
             this.InsertTrigger(trigger, TriggerType.Recurring, trigger.Definition, noParallelExecution: trigger.NoParallelExecution);
         }
 

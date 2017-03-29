@@ -27,8 +27,11 @@ namespace Jobbr.Server.MsSql.Tests
 
             foreach (var statement in sqlStatements)
             {
-                var command = new SqlCommand(statement, _sqlConnection);
-                command.ExecuteNonQuery();
+                using (var command = _sqlConnection.CreateCommand())
+                {
+                    command.CommandText = statement;
+                    command.ExecuteNonQuery();
+                }
             }
 
             _storageProvider = new DapperStorageProvider(new JobbrMsSqlConfiguration

@@ -14,7 +14,7 @@ namespace Jobbr.Server.MsSql
 
             builder.Add<JobbrMsSqlConfiguration>(msSqlConfiguration);
 
-            builder.Register<IJobStorageProvider>(typeof(JobbrMsSqlConfiguration));
+            builder.Register<IJobStorageProvider>(typeof(MsSqlStorageProvider));
             builder.Register<IConfigurationValidator>(typeof(JobbrMsSqlConfigurationValidator));
         }
     }

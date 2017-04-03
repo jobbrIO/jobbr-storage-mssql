@@ -9,14 +9,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Jobbr.Server.MsSql.Tests
 {
     [TestClass]
-    public class DapperStorageProviderTests
+    public class MsSqlStorageProviderTests
     {
         private SqlConnection _sqlConnection;
         private MsSqlStorageProvider _storageProvider;
         private LocalDb _localDb;
 
         [TestInitialize]
-        public void Initialize()
+        public void SetupDatabaseInstance()
         {
             _localDb = new LocalDb();
             _sqlConnection = _localDb.CreateSqlConnection();
@@ -684,6 +684,22 @@ namespace Jobbr.Server.MsSql.Tests
             cmd.ExecuteNonQuery();
 
             Assert.IsFalse(_storageProvider.IsAvailable());
+        }
+
+        [TestMethod]
+        public void GivenEmptyDatabase_WhenAddingJob_JobCountIsIncreased()
+        {
+            var job = new Job
+            {
+                UniqueName = "testjob",
+                Type = "Jobs.Test"
+            };
+
+            _storageProvider.AddJob(job);
+
+            var jobCount = _storageProvider.GetJobsCount();
+
+            Assert.AreEqual(1, jobCount);
         }
     }
 }

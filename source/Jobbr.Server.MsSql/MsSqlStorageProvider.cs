@@ -512,5 +512,15 @@ namespace Jobbr.Server.MsSql
 
             return true;
         }
+
+        public long GetJobsCount()
+        {
+            var sql = $@"SELECT COUNT(*) FROM {this._configuration.Schema}.Jobs";
+
+            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            {
+                return connection.ExecuteScalar<long>(sql);
+            }
+        }
     }
 }

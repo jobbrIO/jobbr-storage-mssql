@@ -12,7 +12,7 @@ namespace Jobbr.Server.MsSql.Tests
     public class DapperStorageProviderTests
     {
         private SqlConnection _sqlConnection;
-        private DapperStorageProvider _storageProvider;
+        private MsSqlStorageProvider _storageProvider;
         private LocalDb _localDb;
 
         [TestInitialize]
@@ -33,7 +33,7 @@ namespace Jobbr.Server.MsSql.Tests
                 }
             }
 
-            _storageProvider = new DapperStorageProvider(new JobbrMsSqlConfiguration
+            _storageProvider = new MsSqlStorageProvider(new JobbrMsSqlConfiguration
             {
                 ConnectionString = _localDb.ConnectionStringName,
                 Schema = "Jobbr"

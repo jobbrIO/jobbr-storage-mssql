@@ -53,7 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Packages\LibLog.3.1\LibLog.cs" />
-    <Compile Include="DapperStorageProvider.cs" />
+    <Compile Include="MsSqlStorageProvider.cs" />
     <Compile Include="JobbrBuilderExtensions.cs" />
     <Compile Include="JobbrMsSqlConfiguration.cs" />
     <Compile Include="JobbrMsSqlConfigurationValidator.cs" />

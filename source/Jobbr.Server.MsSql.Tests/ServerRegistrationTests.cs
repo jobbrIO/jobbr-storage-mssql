@@ -22,7 +22,7 @@ namespace Jobbr.Server.MsSql.Tests
 
             //builder.Create();
 
-            //Assert.AreEqual(typeof(DapperStorageProvider), ExposeStorageProvider.Instance.jobStorageProvider.GetType());
+            //Assert.AreEqual(typeof(MsSqlStorageProvider), ExposeStorageProvider.Instance.jobStorageProvider.GetType());
         }
 
         [TestMethod]

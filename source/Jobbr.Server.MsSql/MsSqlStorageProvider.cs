@@ -11,11 +11,11 @@ namespace Jobbr.Server.MsSql
     /// <summary>
     /// The jobbr dapper provider to store jobserver repository, queue and status information
     /// </summary>
-    public class DapperStorageProvider : IJobStorageProvider
+    public class MsSqlStorageProvider : IJobStorageProvider
     {
         private readonly JobbrMsSqlConfiguration _configuration;
 
-        public DapperStorageProvider(JobbrMsSqlConfiguration configuration)
+        public MsSqlStorageProvider(JobbrMsSqlConfiguration configuration)
         {
             _configuration = configuration;
         }

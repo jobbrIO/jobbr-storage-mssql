@@ -6,7 +6,7 @@ namespace Jobbr.Server.MsSql
 {
     internal class JobbrMsSqlConfigurationValidator : IConfigurationValidator
     {
-        private static readonly ILog Logger = LogProvider.For<DapperStorageProvider>();
+        private static readonly ILog Logger = LogProvider.For<MsSqlStorageProvider>();
 
         public Type ConfigurationType { get; set; } = typeof(JobbrMsSqlConfiguration);
 

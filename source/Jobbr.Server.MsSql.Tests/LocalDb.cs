@@ -41,6 +41,7 @@ namespace Jobbr.Server.MsSql.Tests
         private void CreateDatabase()
         {
             // ReSharper disable once AssignNullToNotNullAttribute
+            Console.WriteLine("Creating database with name " + DatabaseName);
             OutputFolder = GetOutputFolder();
             var mdfFilename = $"{DatabaseName}.mdf";
             DatabaseMdfPath = Path.Combine(OutputFolder, mdfFilename);

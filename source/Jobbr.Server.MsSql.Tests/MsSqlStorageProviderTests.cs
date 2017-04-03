@@ -112,6 +112,21 @@ namespace Jobbr.Server.MsSql.Tests
         }
 
         [TestMethod]
+        public void GivenTwoJobs_WhenQueryingPageTwo_ResultIsPaged()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+
+            _storageProvider.AddJob(job1);
+            _storageProvider.AddJob(job2);
+
+            var jobs = _storageProvider.GetJobs(1, 1);
+
+            Assert.AreEqual(1, jobs.Count);
+            Assert.AreEqual(job2.Id, jobs[0].Id);
+        }
+
+        [TestMethod]
         public void GivenSomeTriggers_WhenQueryingForActiveTriggers_AllActiveTriggersAreReturned()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };

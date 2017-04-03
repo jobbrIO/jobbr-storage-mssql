@@ -41,6 +41,8 @@ server.Start();
 ### Database-Schema
 The extensions assumes that there are already all related tables in the referenced database. Please make sure that these tables are created by using the script located on [source/Jobbr.Server.MsSql/CreateSchemaAndTables.sql](source/Jobbr.Server.MsSql/CreateSchemaAndTables.sql).
 
+![Diagram](https://raw.githubusercontent.com/jobbrIO/jobbr-storage-mssql/develop/docs/diagram.png)
+
 # License
 This software is licenced under GPLv3. See [LICENSE](LICENSE), and the related licences of 3rd party libraries below.
 

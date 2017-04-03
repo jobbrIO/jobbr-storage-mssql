@@ -101,9 +101,11 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
             var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+            var job3 = new Job { UniqueName = "testjob3", Type = "Jobs.Test3" };
 
             _storageProvider.AddJob(job1);
             _storageProvider.AddJob(job2);
+            _storageProvider.AddJob(job3);
 
             var jobs = _storageProvider.GetJobs(0, 1);
 

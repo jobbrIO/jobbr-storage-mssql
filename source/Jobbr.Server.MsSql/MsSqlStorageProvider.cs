@@ -8,9 +8,6 @@ using Jobbr.ComponentModel.JobStorage.Model;
 
 namespace Jobbr.Server.MsSql
 {
-    /// <summary>
-    /// The jobbr dapper provider to store jobserver repository, queue and status information
-    /// </summary>
     public class MsSqlStorageProvider : IJobStorageProvider
     {
         private readonly JobbrMsSqlConfiguration _configuration;

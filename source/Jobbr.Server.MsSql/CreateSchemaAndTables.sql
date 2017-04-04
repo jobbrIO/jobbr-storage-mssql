@@ -21,8 +21,6 @@ CREATE TABLE [Jobbr].[JobRuns](
 	[State] [nvarchar](15) NOT NULL,
 	[Pid] [int] NULL,
   [Host] [nvarchar](100) NULL,
-	[WorkingDir] [nvarchar](300) NULL,
-	[TempDir] [nvarchar](300) NULL,
  CONSTRAINT [PK_JobRuns] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -75,7 +73,7 @@ CREATE TABLE [Jobbr].[Triggers](
 	[Parameters] [nvarchar](max) NULL,
 	[Comment] [nvarchar](max) NULL,
 	[CreatedDateTimeUtc] [datetime2](7) NOT NULL,
-	[NoParallelExecution] [bit] DEFAULT 0 NOT NULL
+	[NoParallelExecution] bit NOT NULL CONSTRAINT DF_Triggers_NoParallelExecution DEFAULT (0),
  CONSTRAINT [PK_Triggers] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

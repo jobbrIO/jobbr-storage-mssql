@@ -39,10 +39,10 @@
       <HintPath>..\packages\Jobbr.ComponentModel.ArtefactStorage.1.0.0-rc4\lib\net45\Jobbr.ComponentModel.ArtefactStorage.dll</HintPath>
     </Reference>
     <Reference Include="Jobbr.ComponentModel.Execution, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Jobbr.ComponentModel.Execution.1.0.0-unstable21\lib\net45\Jobbr.ComponentModel.Execution.dll</HintPath>
+      <HintPath>..\packages\Jobbr.ComponentModel.Execution.1.0.0-unstable22\lib\net45\Jobbr.ComponentModel.Execution.dll</HintPath>
     </Reference>
     <Reference Include="Jobbr.ComponentModel.JobStorage, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Jobbr.ComponentModel.JobStorage.1.0.0-rc12\lib\net45\Jobbr.ComponentModel.JobStorage.dll</HintPath>
+      <HintPath>..\packages\Jobbr.ComponentModel.JobStorage.1.0.0-rc13\lib\net45\Jobbr.ComponentModel.JobStorage.dll</HintPath>
     </Reference>
     <Reference Include="Jobbr.ComponentModel.Management, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Jobbr.ComponentModel.Management.1.0.0-rc8\lib\net45\Jobbr.ComponentModel.Management.dll</HintPath>
@@ -52,7 +52,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Jobbr.Server, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Jobbr.Server.1.0.0-unstable465\lib\net45\Jobbr.Server.dll</HintPath>
+      <HintPath>..\packages\Jobbr.Server.1.0.0-unstable467\lib\net45\Jobbr.Server.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

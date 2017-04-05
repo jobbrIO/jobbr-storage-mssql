@@ -107,7 +107,7 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public List<JobRun> GetJobRuns(long page = 0, long pageSize = 50)
+        public List<JobRun> GetJobRuns(int page = 0, int pageSize = 50)
         {
             var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns ORDER BY PlannedStartDateTimeUtc DESC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
@@ -193,7 +193,7 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public List<JobRun> GetJobRunsByUserId(string userId, long page = 0, long pageSize = 50)
+        public List<JobRun> GetJobRunsByUserId(string userId, int page = 0, int pageSize = 50)
         {
             var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserId = @Id ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
@@ -203,7 +203,7 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public List<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, long page = 0, long pageSize = 50)
+        public List<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 0, int pageSize = 50)
         {
             var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserDisplayName = @UserDisplayName ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
@@ -293,7 +293,7 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public List<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, long page = 0, long pageSize = 50)
+        public List<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 0, int pageSize = 50)
         {
             var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId ORDER BY PlannedStartDateTimeUtc DESC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
@@ -303,7 +303,7 @@ namespace Jobbr.Server.MsSql
             }
         }
 
-        public List<JobRun> GetJobRunsByState(JobRunStates state, long page = 0, long pageSize = 50)
+        public List<JobRun> GetJobRunsByState(JobRunStates state, int page = 0, int pageSize = 50)
         {
             var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [State] = @State ORDER BY PlannedStartDateTimeUtc ASC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 

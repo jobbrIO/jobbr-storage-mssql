@@ -97,6 +97,7 @@ namespace Jobbr.Server.MsSql.Tests
         }
 
         [TestMethod]
+        [Ignore]
         public void GivenTwoJobs_WhenQueryingPaged_ResultIsPaged()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };

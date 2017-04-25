@@ -1,4 +1,4 @@
-namespace Jobbr.Server.MsSql
+namespace Jobbr.Storage.MsSql
 {
     public static class TriggerType
     {

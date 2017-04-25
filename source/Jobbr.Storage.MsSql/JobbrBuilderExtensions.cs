@@ -2,7 +2,7 @@
 using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.Registration;
 
-namespace Jobbr.Server.MsSql
+namespace Jobbr.Storage.MsSql
 {
     public static class JobbrBuilderExtensions
     {

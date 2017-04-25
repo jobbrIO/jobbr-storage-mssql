@@ -6,8 +6,8 @@
     <ProjectGuid>{B62C25D3-F751-4B39-A750-B0E878D046F3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Jobbr.Server.MsSql.Tests</RootNamespace>
-    <AssemblyName>Jobbr.Server.MsSql.Tests</AssemblyName>
+    <RootNamespace>Jobbr.Storage.MsSql.Tests</RootNamespace>
+    <AssemblyName>Jobbr.Storage.MsSql.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -91,9 +91,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Jobbr.Server.MsSql\Jobbr.Server.MsSql.csproj">
-      <Project>{a0b35be9-e134-4c81-9976-ac08850218d1}</Project>
-      <Name>Jobbr.Server.MsSql</Name>
+    <ProjectReference Include="..\Jobbr.Storage.MsSql\Jobbr.Storage.MsSql.csproj">
+      <Project>{A0B35BE9-E134-4C81-9976-AC08850218D1}</Project>
+      <Name>Jobbr.Storage.MsSql</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

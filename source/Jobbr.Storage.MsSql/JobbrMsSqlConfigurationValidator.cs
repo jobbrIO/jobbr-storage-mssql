@@ -2,7 +2,7 @@ using System;
 using Jobbr.ComponentModel.Registration;
 using Jobbr.Server.MsSql.Logging;
 
-namespace Jobbr.Server.MsSql
+namespace Jobbr.Storage.MsSql
 {
     internal class JobbrMsSqlConfigurationValidator : IConfigurationValidator
     {

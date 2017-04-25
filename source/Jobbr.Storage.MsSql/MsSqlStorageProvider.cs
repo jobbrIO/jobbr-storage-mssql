@@ -6,7 +6,7 @@ using Dapper;
 using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.JobStorage.Model;
 
-namespace Jobbr.Server.MsSql
+namespace Jobbr.Storage.MsSql
 {
     public class MsSqlStorageProvider : IJobStorageProvider
     {
@@ -14,7 +14,7 @@ namespace Jobbr.Server.MsSql
 
         public MsSqlStorageProvider(JobbrMsSqlConfiguration configuration)
         {
-            _configuration = configuration;
+            this._configuration = configuration;
         }
 
         public override string ToString()

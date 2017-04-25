@@ -13,7 +13,7 @@ assembly_info:
   patch: false
 
 before_build:
-  - nuget restore source/Jobbr.Server.MsSql.sln
+  - nuget restore source/Jobbr.Storage.MsSql.sln
   - ps: C:\ProgramData\chocolatey\lib\GitVersion.Portable\tools\GitVersion.exe /l console /output buildserver /updateAssemblyInfo
 
 platform: Any CPU
@@ -21,14 +21,14 @@ configuration: Release
 
 build:
   parallel: true 
-  project: source/Jobbr.Server.MsSql.sln
+  project: source/Jobbr.Storage.MsSql.sln
 
 after_build:
   - cmd: nuget install ILMerge -ExcludeVersion
   - cmd: mkdir ilmerged
-  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/Jobbr.Server.MsSql.dll source/Jobbr.Server.MsSql/bin/Release/Jobbr.Server.MsSql.dll source/Jobbr.Server.MsSql/bin/Release/Dapper.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
-  - cmd: nuget pack source\Jobbr.Server.MsSql.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
-  - cmd: appveyor PushArtifact "Jobbr.Server.MsSql.%GitVersion_NuGetVersion%.nupkg"
+  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/Dapper.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
+  - cmd: nuget pack source\Jobbr.Storage.MsSql.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
+  - cmd: appveyor PushArtifact "Jobbr.Storage.MsSql.%GitVersion_NuGetVersion%.nupkg"
 
 deploy:
 - provider: NuGet

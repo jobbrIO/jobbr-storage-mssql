@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
-namespace Jobbr.Server.MsSql.Tests
+namespace Jobbr.Storage.MsSql.Tests
 {
     public class SqlHelper
     {

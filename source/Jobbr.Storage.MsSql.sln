@@ -3,16 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobbr.Server.MsSql", "Jobbr.Server.MsSql\Jobbr.Server.MsSql.csproj", "{A0B35BE9-E134-4C81-9976-AC08850218D1}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{FA37061C-BB48-421E-AC29-7414CF6EBB9D}"
 	ProjectSection(SolutionItems) = preProject
 		..\appveyor.yml = ..\appveyor.yml
 		..\GitVersion.yml = ..\GitVersion.yml
-		Jobbr.Server.MsSql.nuspec = Jobbr.Server.MsSql.nuspec
+		Jobbr.Storage.MsSql.nuspec = Jobbr.Storage.MsSql.nuspec
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobbr.Server.MsSql.Tests", "Jobbr.Server.MsSql.Tests\Jobbr.Server.MsSql.Tests.csproj", "{B62C25D3-F751-4B39-A750-B0E878D046F3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobbr.Storage.MsSql", "Jobbr.Storage.MsSql\Jobbr.Storage.MsSql.csproj", "{A0B35BE9-E134-4C81-9976-AC08850218D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobbr.Storage.MsSql.Tests", "Jobbr.Storage.MsSql.Tests\Jobbr.Storage.MsSql.Tests.csproj", "{B62C25D3-F751-4B39-A750-B0E878D046F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

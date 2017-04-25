@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Jobbr.Server.MsSql</id>
+    <id>Jobbr.Storage.MsSql</id>
     <version>$version$</version>
     <authors>Jobbr</authors>
     <owners>Jobbr</owners>
@@ -14,8 +14,8 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="..\ilmerged\Jobbr.Server.MsSql.dll" target="lib\net45"/>
-    <file src="..\ilmerged\Jobbr.Server.MsSql.pdb" target="lib\net45"/>
-    <file src="Jobbr.Server.MsSql\CreateSchemaAndTables.sql" target=""/>
+    <file src="..\ilmerged\Jobbr.Storage.MsSql.dll" target="lib\net45"/>
+    <file src="..\ilmerged\Jobbr.Storage.MsSql.pdb" target="lib\net45"/>
+    <file src="Jobbr.Storage.MsSql\CreateSchemaAndTables.sql" target=""/>
   </files>
 </package>

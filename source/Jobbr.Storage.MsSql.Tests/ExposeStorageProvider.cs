@@ -1,7 +1,7 @@
 ﻿using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.Registration;
 
-namespace Jobbr.Server.MsSql.Tests
+namespace Jobbr.Storage.MsSql.Tests
 {
     public partial class ServerRegistrationTests
     {

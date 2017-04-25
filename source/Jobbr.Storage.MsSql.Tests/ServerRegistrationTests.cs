@@ -1,10 +1,11 @@
 ﻿using System.IO;
 using System.Linq;
 using Jobbr.ComponentModel.Registration;
+using Jobbr.Server;
 using Jobbr.Server.Builder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Jobbr.Server.MsSql.Tests
+namespace Jobbr.Storage.MsSql.Tests
 {
     [TestClass]
     public partial class ServerRegistrationTests

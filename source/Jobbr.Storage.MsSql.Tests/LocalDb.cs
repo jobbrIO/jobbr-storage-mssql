@@ -3,7 +3,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Reflection;
 
-namespace Jobbr.Server.MsSql.Tests
+namespace Jobbr.Storage.MsSql.Tests
 {
     public class LocalDb : IDisposable
     {

@@ -6,7 +6,7 @@ using System.Linq;
 using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Jobbr.Server.MsSql.Tests
+namespace Jobbr.Storage.MsSql.Tests
 {
     [TestClass]
     public class MsSqlStorageProviderTests
@@ -18,24 +18,24 @@ namespace Jobbr.Server.MsSql.Tests
         [TestInitialize]
         public void SetupDatabaseInstance()
         {
-            _localDb = new LocalDb();
-            _sqlConnection = _localDb.CreateSqlConnection();
-            _sqlConnection.Open();
+            this._localDb = new LocalDb();
+            this._sqlConnection = this._localDb.CreateSqlConnection();
+            this._sqlConnection.Open();
 
             var sqlStatements = SqlHelper.SplitSqlStatements(File.ReadAllText("CreateSchemaAndTables.sql")).ToList();
 
             foreach (var statement in sqlStatements)
             {
-                using (var command = _sqlConnection.CreateCommand())
+                using (var command = this._sqlConnection.CreateCommand())
                 {
                     command.CommandText = statement;
                     command.ExecuteNonQuery();
                 }
             }
 
-            _storageProvider = new MsSqlStorageProvider(new JobbrMsSqlConfiguration
+            this._storageProvider = new MsSqlStorageProvider(new JobbrMsSqlConfiguration
             {
-                ConnectionString = _localDb.ConnectionStringName,
+                ConnectionString = this._localDb.ConnectionStringName,
                 Schema = "Jobbr"
             });
         }
@@ -43,7 +43,7 @@ namespace Jobbr.Server.MsSql.Tests
         [TestCleanup]
         public void TestCleanup()
         {
-            _sqlConnection.Close();
+            this._sqlConnection.Close();
         }
 
         [TestMethod]
@@ -55,7 +55,7 @@ namespace Jobbr.Server.MsSql.Tests
                 Type = "Jobs.Test"
             };
 
-            _storageProvider.AddJob(job);
+            this._storageProvider.AddJob(job);
 
             Assert.AreNotEqual(0, job.Id);
         }
@@ -69,9 +69,9 @@ namespace Jobbr.Server.MsSql.Tests
                 Type = "Jobs.Test"
             };
 
-            _storageProvider.AddJob(job);
+            this._storageProvider.AddJob(job);
 
-            var job2 = _storageProvider.GetJobById(job.Id);
+            var job2 = this._storageProvider.GetJobById(job.Id);
 
             Assert.AreEqual(job.Id, job2.Id);
             Assert.AreEqual("testjob", job2.UniqueName);
@@ -87,9 +87,9 @@ namespace Jobbr.Server.MsSql.Tests
                 Type = "Jobs.Test"
             };
 
-            _storageProvider.AddJob(job);
+            this._storageProvider.AddJob(job);
 
-            var job2 = _storageProvider.GetJobByUniqueName(job.UniqueName);
+            var job2 = this._storageProvider.GetJobByUniqueName(job.UniqueName);
 
             Assert.AreEqual(job.Id, job2.Id);
             Assert.AreEqual("testjob", job2.UniqueName);
@@ -104,11 +104,11 @@ namespace Jobbr.Server.MsSql.Tests
             var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
             var job3 = new Job { UniqueName = "testjob3", Type = "Jobs.Test3" };
 
-            _storageProvider.AddJob(job1);
-            _storageProvider.AddJob(job2);
-            _storageProvider.AddJob(job3);
+            this._storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job2);
+            this._storageProvider.AddJob(job3);
 
-            var jobs = _storageProvider.GetJobs(0, 1);
+            var jobs = this._storageProvider.GetJobs(0, 1);
 
             Assert.AreEqual(1, jobs.Count);
             Assert.AreEqual(job1.Id, jobs[0].Id);
@@ -122,11 +122,11 @@ namespace Jobbr.Server.MsSql.Tests
             var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
             var job3 = new Job { UniqueName = "testjob3", Type = "Jobs.Test3" };
 
-            _storageProvider.AddJob(job1);
-            _storageProvider.AddJob(job2);
-            _storageProvider.AddJob(job3);
+            this._storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job2);
+            this._storageProvider.AddJob(job3);
 
-            var jobs = _storageProvider.GetJobs(1, 1);
+            var jobs = this._storageProvider.GetJobs(1, 1);
 
             Assert.AreEqual(1, jobs.Count);
             Assert.AreEqual(job2.Id, jobs[0].Id);
@@ -138,18 +138,18 @@ namespace Jobbr.Server.MsSql.Tests
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
             var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
 
-            _storageProvider.AddJob(job1);
-            _storageProvider.AddJob(job2);
+            this._storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job2);
 
             var trigger1 = new InstantTrigger { IsActive = false };
             var trigger2 = new InstantTrigger { IsActive = true };
             var trigger3 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
-            _storageProvider.AddTrigger(job1.Id, trigger2);
-            _storageProvider.AddTrigger(job2.Id, trigger3);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger2);
+            this._storageProvider.AddTrigger(job2.Id, trigger3);
 
-            var activeTriggers = _storageProvider.GetActiveTriggers();
+            var activeTriggers = this._storageProvider.GetActiveTriggers();
 
             Assert.AreEqual(2, activeTriggers.Count);
         }
@@ -160,19 +160,19 @@ namespace Jobbr.Server.MsSql.Tests
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
             var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
 
-            _storageProvider.AddJob(job1);
-            _storageProvider.AddJob(job2);
+            this._storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job2);
 
             var trigger1 = new InstantTrigger();
             var trigger2 = new InstantTrigger();
             var trigger3 = new InstantTrigger();
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
-            _storageProvider.AddTrigger(job1.Id, trigger2);
-            _storageProvider.AddTrigger(job2.Id, trigger3);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger2);
+            this._storageProvider.AddTrigger(job2.Id, trigger3);
 
-            var triggersOfJob1 = _storageProvider.GetTriggersByJobId(job1.Id);
-            var triggersOfJob2 = _storageProvider.GetTriggersByJobId(job2.Id);
+            var triggersOfJob1 = this._storageProvider.GetTriggersByJobId(job1.Id);
+            var triggersOfJob2 = this._storageProvider.GetTriggersByJobId(job2.Id);
 
             Assert.AreEqual(2, triggersOfJob1.Count);
             Assert.AreEqual(1, triggersOfJob2.Count);
@@ -183,17 +183,17 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow };
 
-            _storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun1);
 
-            var jobRun2 = _storageProvider.GetJobRunById(jobRun1.Id);
+            var jobRun2 = this._storageProvider.GetJobRunById(jobRun1.Id);
 
             Assert.AreEqual(jobRun1.Id, jobRun2.Id);
         }
@@ -203,23 +203,23 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
 
-            var jobRuns = _storageProvider.GetJobRuns(0, 1);
+            var jobRuns = this._storageProvider.GetJobRuns(0, 1);
 
             Assert.AreEqual(1, jobRuns.Count);
 
-            jobRuns = _storageProvider.GetJobRuns(0, 2);
+            jobRuns = this._storageProvider.GetJobRuns(0, 2);
 
             Assert.AreEqual(2, jobRuns.Count);
         }
@@ -229,21 +229,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByState(JobRunStates.Failed);
+            var jobRuns = this._storageProvider.GetJobRunsByState(JobRunStates.Failed);
 
             Assert.AreEqual(1, jobRuns.Count);
         }
@@ -253,25 +253,25 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByState(JobRunStates.Completed, 0, 1);
+            var jobRuns = this._storageProvider.GetJobRunsByState(JobRunStates.Completed, 0, 1);
 
             Assert.AreEqual(1, jobRuns.Count);
 
-            jobRuns = _storageProvider.GetJobRunsByState(JobRunStates.Completed, 0, 2);
+            jobRuns = this._storageProvider.GetJobRunsByState(JobRunStates.Completed, 0, 2);
 
             Assert.AreEqual(2, jobRuns.Count);
         }
@@ -281,21 +281,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id);
+            var jobRuns = this._storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id);
 
             Assert.AreEqual(3, jobRuns.Count);
         }
@@ -305,21 +305,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id, 0, 2);
+            var jobRuns = this._storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id, 0, 2);
 
             Assert.AreEqual(2, jobRuns.Count);
         }
@@ -329,21 +329,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true, UserDisplayName = "chefkoch" };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByUserDisplayName("chefkoch");
+            var jobRuns = this._storageProvider.GetJobRunsByUserDisplayName("chefkoch");
 
             Assert.AreEqual(3, jobRuns.Count);
         }
@@ -353,21 +353,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true, UserDisplayName = "chefkoch" };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByUserDisplayName("chefkoch", 0, 2);
+            var jobRuns = this._storageProvider.GetJobRunsByUserDisplayName("chefkoch", 0, 2);
 
             Assert.AreEqual(2, jobRuns.Count);
         }
@@ -377,21 +377,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true, UserId = "ozu" };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByUserId("ozu");
+            var jobRuns = this._storageProvider.GetJobRunsByUserId("ozu");
 
             Assert.AreEqual(3, jobRuns.Count);
         }
@@ -401,21 +401,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true, UserId = "ozu" };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = _storageProvider.GetJobRunsByUserId("ozu", 0, 2);
+            var jobRuns = this._storageProvider.GetJobRunsByUserId("ozu", 0, 2);
 
             Assert.AreEqual(2, jobRuns.Count);
         }
@@ -425,15 +425,15 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
-            _storageProvider.DisableTrigger(job1.Id, trigger1.Id);
+            this._storageProvider.DisableTrigger(job1.Id, trigger1.Id);
 
-            var triggerFromDb = _storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+            var triggerFromDb = this._storageProvider.GetTriggerById(job1.Id, trigger1.Id);
 
             Assert.IsFalse(triggerFromDb.IsActive);
         }
@@ -443,14 +443,14 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = false };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
-            _storageProvider.EnableTrigger(job1.Id, trigger1.Id);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.EnableTrigger(job1.Id, trigger1.Id);
 
-            var triggerFromDb = _storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+            var triggerFromDb = this._storageProvider.GetTriggerById(job1.Id, trigger1.Id);
             
             Assert.IsTrue(triggerFromDb.IsActive);
         }
@@ -460,11 +460,11 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var now = DateTime.UtcNow;
 
@@ -472,11 +472,11 @@ namespace Jobbr.Server.MsSql.Tests
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = now.AddMinutes(1), ActualStartDateTimeUtc = now.AddMinutes(1), State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = now.AddMinutes(2), ActualStartDateTimeUtc = now.AddMinutes(2), State = JobRunStates.Completed };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var lastJobRun = _storageProvider.GetLastJobRunByTriggerId(job1.Id, trigger1.Id, now.AddSeconds(30));
+            var lastJobRun = this._storageProvider.GetLastJobRunByTriggerId(job1.Id, trigger1.Id, now.AddSeconds(30));
 
             Assert.AreEqual(jobRun1.Id, lastJobRun.Id);
         }
@@ -486,11 +486,11 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var now = DateTime.UtcNow;
 
@@ -498,11 +498,11 @@ namespace Jobbr.Server.MsSql.Tests
             var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = now.AddMinutes(1), ActualStartDateTimeUtc = now.AddMinutes(1), State = JobRunStates.Completed };
             var jobRun3 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = now.AddMinutes(2), State = JobRunStates.Scheduled };
 
-            _storageProvider.AddJobRun(jobRun1);
-            _storageProvider.AddJobRun(jobRun2);
-            _storageProvider.AddJobRun(jobRun3);
+            this._storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun2);
+            this._storageProvider.AddJobRun(jobRun3);
 
-            var lastJobRun = _storageProvider.GetNextJobRunByTriggerId(job1.Id, trigger1.Id, now.AddMinutes(1));
+            var lastJobRun = this._storageProvider.GetNextJobRunByTriggerId(job1.Id, trigger1.Id, now.AddMinutes(1));
             Assert.AreEqual(jobRun3.Id, lastJobRun.Id);
         }
 
@@ -511,21 +511,21 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true };
 
-            _storageProvider.AddTrigger(job1.Id, trigger1);
+            this._storageProvider.AddTrigger(job1.Id, trigger1);
 
             var now = DateTime.UtcNow;
 
             var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = now, ActualStartDateTimeUtc = now, State = JobRunStates.Completed };
          
-            _storageProvider.AddJobRun(jobRun1);
+            this._storageProvider.AddJobRun(jobRun1);
            
-            _storageProvider.UpdateProgress(jobRun1.Id, 50);
+            this._storageProvider.UpdateProgress(jobRun1.Id, 50);
 
-            var jobRun2 = _storageProvider.GetJobRunById(jobRun1.Id);
+            var jobRun2 = this._storageProvider.GetJobRunById(jobRun1.Id);
 
             Assert.AreEqual(50, jobRun2.Progress);
         }
@@ -535,16 +535,16 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             job1.UniqueName = "test-uniquename";
             job1.Title = "test-title";
             job1.Type = "test-type";
             job1.Parameters = "test-parameters";
            
-            _storageProvider.Update(job1);
+            this._storageProvider.Update(job1);
 
-            var job1Reloaded = _storageProvider.GetJobById(job1.Id);
+            var job1Reloaded = this._storageProvider.GetJobById(job1.Id);
 
             Assert.AreEqual("test-uniquename", job1Reloaded.UniqueName);
             Assert.AreEqual("test-title", job1Reloaded.Title);
@@ -557,15 +557,15 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger = new InstantTrigger {IsActive = true};
 
-            _storageProvider.AddTrigger(job1.Id, trigger);
+            this._storageProvider.AddTrigger(job1.Id, trigger);
 
             var jobRun = new JobRun {JobId = job1.Id, TriggerId = trigger.Id, PlannedStartDateTimeUtc = DateTime.UtcNow};
 
-            _storageProvider.AddJobRun(jobRun);
+            this._storageProvider.AddJobRun(jobRun);
 
             var newPlannedStartDate = DateTime.UtcNow;
             var newActualStartDate = newPlannedStartDate.AddSeconds(1);
@@ -579,9 +579,9 @@ namespace Jobbr.Server.MsSql.Tests
             jobRun.EstimatedEndDateTimeUtc = newEstimatedStartDate;
             jobRun.ActualEndDateTimeUtc = newActualEndDate;
 
-            _storageProvider.Update(jobRun);
+            this._storageProvider.Update(jobRun);
 
-            var job1Reloaded = _storageProvider.GetJobRunById(job1.Id);
+            var job1Reloaded = this._storageProvider.GetJobRunById(job1.Id);
 
             Assert.AreEqual("test-jobparameters", job1Reloaded.JobParameters);
             Assert.AreEqual("test-instanceparameters", job1Reloaded.InstanceParameters);
@@ -596,22 +596,22 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger = new InstantTrigger();
 
-            _storageProvider.AddTrigger(job1.Id, trigger);
+            this._storageProvider.AddTrigger(job1.Id, trigger);
 
-            var trigger2 = (InstantTrigger)_storageProvider.GetTriggerById(job1.Id, trigger.Id);
+            var trigger2 = (InstantTrigger)this._storageProvider.GetTriggerById(job1.Id, trigger.Id);
             trigger2.Comment = "bla";
             trigger2.IsActive = true;
             trigger2.Parameters = "test-parameters";
             trigger2.UserId = "ozu";
             trigger2.DelayedMinutes = 5;
 
-            _storageProvider.Update(job1.Id, trigger2);
+            this._storageProvider.Update(job1.Id, trigger2);
 
-            var trigger2Reloaded = (InstantTrigger)_storageProvider.GetTriggerById(job1.Id, trigger2.Id);
+            var trigger2Reloaded = (InstantTrigger)this._storageProvider.GetTriggerById(job1.Id, trigger2.Id);
     
             Assert.AreEqual("bla", trigger2Reloaded.Comment);
             Assert.IsTrue(trigger2Reloaded.IsActive);
@@ -625,13 +625,13 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger = new ScheduledTrigger {StartDateTimeUtc = DateTime.UtcNow};
 
-            _storageProvider.AddTrigger(job1.Id, trigger);
+            this._storageProvider.AddTrigger(job1.Id, trigger);
 
-            var trigger2 = (ScheduledTrigger)_storageProvider.GetTriggerById(job1.Id, trigger.Id);
+            var trigger2 = (ScheduledTrigger)this._storageProvider.GetTriggerById(job1.Id, trigger.Id);
 
             var startDateTime = DateTime.UtcNow.AddHours(5);
 
@@ -641,9 +641,9 @@ namespace Jobbr.Server.MsSql.Tests
             trigger2.UserId = "ozu";
             trigger2.StartDateTimeUtc = startDateTime;
 
-            _storageProvider.Update(job1.Id, trigger2);
+            this._storageProvider.Update(job1.Id, trigger2);
 
-            var trigger2Reloaded = (ScheduledTrigger)_storageProvider.GetTriggerById(job1.Id, trigger2.Id);
+            var trigger2Reloaded = (ScheduledTrigger)this._storageProvider.GetTriggerById(job1.Id, trigger2.Id);
 
             Assert.AreEqual("bla", trigger2Reloaded.Comment);
             Assert.IsTrue(trigger2Reloaded.IsActive);
@@ -657,13 +657,13 @@ namespace Jobbr.Server.MsSql.Tests
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
 
-            _storageProvider.AddJob(job1);
+            this._storageProvider.AddJob(job1);
 
             var trigger = new RecurringTrigger();
 
-            _storageProvider.AddTrigger(job1.Id, trigger);
+            this._storageProvider.AddTrigger(job1.Id, trigger);
 
-            var trigger2 = (RecurringTrigger)_storageProvider.GetTriggerById(job1.Id, trigger.Id);
+            var trigger2 = (RecurringTrigger)this._storageProvider.GetTriggerById(job1.Id, trigger.Id);
 
             var startDateTime = DateTime.UtcNow.AddHours(5);
             var endDateTime = DateTime.UtcNow.AddHours(7);
@@ -677,9 +677,9 @@ namespace Jobbr.Server.MsSql.Tests
             trigger2.EndDateTimeUtc = endDateTime;
             trigger2.NoParallelExecution = true;
 
-            _storageProvider.Update(job1.Id, trigger2);
+            this._storageProvider.Update(job1.Id, trigger2);
 
-            var trigger2Reloaded = (RecurringTrigger)_storageProvider.GetTriggerById(job1.Id, trigger2.Id);
+            var trigger2Reloaded = (RecurringTrigger)this._storageProvider.GetTriggerById(job1.Id, trigger2.Id);
 
             Assert.AreEqual("bla", trigger2Reloaded.Comment);
             Assert.IsTrue(trigger2Reloaded.IsActive);
@@ -694,17 +694,17 @@ namespace Jobbr.Server.MsSql.Tests
         [TestMethod]
         public void GivenRunningDatabase_WhenCheckingAvailability_IsAvailable()
         {
-            Assert.IsTrue(_storageProvider.IsAvailable());
+            Assert.IsTrue(this._storageProvider.IsAvailable());
         }
 
         [TestMethod]
         public void GivenNonRunningDatabase_WhenCheckingAvailability_IsAvailable()
         {
-            var cmd = _sqlConnection.CreateCommand();
+            var cmd = this._sqlConnection.CreateCommand();
             cmd.CommandText = $"DROP TABLE Jobbr.Jobs;";
             cmd.ExecuteNonQuery();
 
-            Assert.IsFalse(_storageProvider.IsAvailable());
+            Assert.IsFalse(this._storageProvider.IsAvailable());
         }
 
         [TestMethod]
@@ -716,9 +716,9 @@ namespace Jobbr.Server.MsSql.Tests
                 Type = "Jobs.Test"
             };
 
-            _storageProvider.AddJob(job);
+            this._storageProvider.AddJob(job);
 
-            var jobCount = _storageProvider.GetJobsCount();
+            var jobCount = this._storageProvider.GetJobsCount();
 
             Assert.AreEqual(1, jobCount);
         }

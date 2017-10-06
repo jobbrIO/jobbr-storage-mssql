@@ -30,13 +30,14 @@ namespace Jobbr.Storage.MsSql.Tests
         [TestMethod]
         public void RegisteredAsComponent_WithBasicConfiguration_DoesStart()
         {
-            var connectionString = GivenDatabaseInstance();
+            var localDb = new LocalDb();
+            var sqlConnection = localDb.CreateSqlConnection();
+
             var builder = new JobbrBuilder();
-            builder.Register<IJobbrComponent>(typeof(ExposeStorageProvider));
 
             builder.AddMsSqlStorage(config =>
             {
-                config.ConnectionString = connectionString;
+                config.ConnectionString = sqlConnection.ConnectionString;
                 config.Schema = "Jobbr";
             });
 
@@ -46,26 +47,6 @@ namespace Jobbr.Storage.MsSql.Tests
 
                 Assert.AreEqual(JobbrState.Running, server.State, "Server should be possible to start with default configuration");
             }
-        }
-
-        private static string GivenDatabaseInstance()
-        {
-            var localDb = new LocalDb();
-            var sqlConnection = localDb.CreateSqlConnection();
-            sqlConnection.Open();
-
-            var sqlStatements = SqlHelper.SplitSqlStatements(File.ReadAllText("CreateSchemaAndTables.sql")).ToList();
-
-            foreach (var statement in sqlStatements)
-            {
-                using (var command = sqlConnection.CreateCommand())
-                {
-                    command.CommandText = statement;
-                    command.ExecuteNonQuery();
-                }
-            }
-
-            return localDb.ConnectionStringName;
         }
     }
 }

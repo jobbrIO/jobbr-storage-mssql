@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -22,22 +20,13 @@ namespace Jobbr.Storage.MsSql.Tests
             this._sqlConnection = this._localDb.CreateSqlConnection();
             this._sqlConnection.Open();
 
-            var sqlStatements = SqlHelper.SplitSqlStatements(File.ReadAllText("CreateSchemaAndTables.sql")).ToList();
-
-            foreach (var statement in sqlStatements)
-            {
-                using (var command = this._sqlConnection.CreateCommand())
-                {
-                    command.CommandText = statement;
-                    command.ExecuteNonQuery();
-                }
-            }
-
             this._storageProvider = new MsSqlStorageProvider(new JobbrMsSqlConfiguration
             {
                 ConnectionString = this._localDb.ConnectionStringName,
                 Schema = "Jobbr"
             });
+
+            this._storageProvider.IsAvailable();
         }
 
         [TestCleanup]

@@ -2,14 +2,19 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Reflection;
 using Dapper;
+using DbUp;
 using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.JobStorage.Model;
+using Jobbr.Server.MsSql.Logging;
 
 namespace Jobbr.Storage.MsSql
 {
     public class MsSqlStorageProvider : IJobStorageProvider
     {
+        private static readonly ILog Logger = LogProvider.For<MsSqlStorageProvider>();
+
         private readonly JobbrMsSqlConfiguration _configuration;
 
         public MsSqlStorageProvider(JobbrMsSqlConfiguration configuration)
@@ -497,6 +502,60 @@ namespace Jobbr.Storage.MsSql
         }
 
         public bool IsAvailable()
+        {
+            if (!UpgradeDatabaseIfRequired())
+            {
+                Logger.Error($"There was an error while upgrading the schema and tables. Please upgrade manually by executing the related scripts from https://github.com/jobbrIO/jobbr-storage-mssql/tree/develop/source/Jobbr.Storage.MsSql/UpgradeScripts");
+            }
+
+            return TryGetSingleJobWithNoException();
+        }
+
+        private bool UpgradeDatabaseIfRequired()
+        {
+            var connectionString = _configuration.ConnectionString;
+
+            if (_configuration.AutoCreateDatabase)
+            {
+                EnsureDatabase.For.SqlDatabase(connectionString);
+            }
+
+            var upgrader = DeployChanges.To
+                    .SqlDatabase(connectionString)
+                    .WithScriptsEmbeddedInAssembly(typeof(MsSqlStorageProvider).Assembly)
+                    .WithVariable("schema", _configuration.Schema)
+                    .LogScriptOutput()
+                    .LogTo(new UpgradeLogger())
+                    .Build();
+
+            if (!upgrader.IsUpgradeRequired())
+            {
+                return true;
+            }
+
+            if (!_configuration.AutoUpgrade)
+            {
+                return false;
+            }
+
+            var result = upgrader.PerformUpgrade();
+
+            var scriptsList = string.Join("\n", result.Scripts.Select(s => $"- {s.Name}"));
+
+            if (result.Successful)
+            {
+                Logger.Debug($"Executed scripts during upgrade: \n{scriptsList}");
+            }
+            else
+            {
+                Logger.Error($"Failed to upgrade the database while executing the following scripts:\n{scriptsList}");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryGetSingleJobWithNoException()
         {
             try
             {

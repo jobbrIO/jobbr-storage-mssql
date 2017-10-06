@@ -57,7 +57,7 @@
       <HintPath>..\packages\Jobbr.ComponentModel.Registration.1.0.0\lib\net45\Jobbr.ComponentModel.Registration.dll</HintPath>
     </Reference>
     <Reference Include="Jobbr.Server, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Jobbr.Server.1.0.0-unstable467\lib\net45\Jobbr.Server.dll</HintPath>
+      <HintPath>..\packages\Jobbr.Server.1.0.0-unstable.469\lib\net45\Jobbr.Server.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -86,7 +86,6 @@
     <Compile Include="PackagingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerRegistrationTests.cs" />
-    <Compile Include="SqlHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -17,7 +17,7 @@ First of all you'll need a working jobserver by using the usual builder as shown
     Install-Package Jobbr.Storage.MsSql
 
 ### Configuration
-Since you already have a configured server, the registration of the MsSQL Storage Provider is quite easy. Actually you only need a working Database-Connection (A list of typical ConnectionStrings can be found on [https://www.connectionstrings.com/sql-server/](https://www.connectionstrings.com/sql-server/)
+Since you already have a configured server, the registration of the MsSQL Storage Provider is quite easy. Actually you only need a working Database-Connection (A list of typical ConnectionStrings can be found on [https://www.connectionstrings.com/sql-server/](https://www.connectionstrings.com/sql-server/))
 
 ```c#
 using Jobbr.Storage.MsSql;
@@ -38,8 +38,17 @@ builder.AddMsSqlStorage(config =>
 server.Start();
 ```
 
+There are additional configuration options beside the mentioned ones above.
+
+| Name | Description | Default |
+| ---- | ----------- | ------- |
+|`ConnectionString` | Standard ConnectionString as available on [https://www.connectionstrings.com/sql-server/](https://www.connectionstrings.com/sql-server/) | **Required** |
+|`Schema` | Change the Database Schema if you want | `Jobbr` |
+|`AutoUpgrade` | Auto execute upgrade scripts to update the databse to the terget version | `true` |
+|`AutoCreateDatabase` | Create database if not existing | `false` |
+
 ### Database-Schema
-The extensions assumes that there are already all related tables in the referenced database. Please make sure that these tables are created by using the script located on [source/Jobbr.Storage.MsSql/CreateSchemaAndTables.sql](source/Jobbr.Storage.MsSql/CreateSchemaAndTables.sql).
+The extension can create the datebase and related schemas and tables on start and does automatically upgrade the database schema on future releases. By default, the Database creation is disabled while auto migrations (based on DbUp) are executed automatically on start.
 
 ![Diagram](https://raw.githubusercontent.com/jobbrIO/jobbr-storage-mssql/develop/docs/diagram.png)
 
@@ -51,10 +60,9 @@ This extension is built using the following great open source projects
 
 * [Dapper](https://github.com/StackExchange/Dapper) 
   [(Apache-2.0)](https://github.com/StackExchange/Dapper/blob/master/License.txt)
+* [DbUp](https://dbup.github.io/) [(MIT)](https://raw.githubusercontent.com/DbUp/DbUp/master/license.txt)
 * [LibLog](https://github.com/damianh/LibLog) 
   [(MIT)](https://github.com/damianh/LibLog/blob/master/licence.txt)
-
-
 
 # Credits
 This application was built by the following awesome developers:

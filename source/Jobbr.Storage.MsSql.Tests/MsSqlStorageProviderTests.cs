@@ -209,8 +209,8 @@ namespace Jobbr.Storage.MsSql.Tests
 
             this._storageProvider.AddTrigger(job1.Id, trigger1);
 
-            var jobRun1 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow };
-            var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun1 = Create(job1.Id, trigger1.Id, DateTime.UtcNow);
+            ////var jobRun2 = new JobRun { JobId = job1.Id, TriggerId = trigger1.Id, PlannedStartDateTimeUtc = DateTime.UtcNow };
 
             this._storageProvider.AddJobRun(jobRun1);
             this._storageProvider.AddJobRun(jobRun2);
@@ -721,6 +721,17 @@ namespace Jobbr.Storage.MsSql.Tests
             var jobCount = this._storageProvider.GetJobsCount();
 
             Assert.AreEqual(1, jobCount);
+        }
+
+        private static JobRun Create(long jobId, long triggerId, DateTime plannedStartTimeUtc, JobRunStates state = default(JobRunStates))
+        {
+            return new JobRun
+            {
+                Job = { Id = jobId },
+                Trigger = { Id = triggerId },
+                PlannedStartDateTimeUtc = plannedStartTimeUtc,
+                State = state
+            };
         }
     }
 }

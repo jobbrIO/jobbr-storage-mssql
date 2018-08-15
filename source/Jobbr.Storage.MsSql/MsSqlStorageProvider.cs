@@ -1,20 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using Dapper;
 using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.JobStorage.Model;
+using ServiceStack.OrmLite;
+using ServiceStack.OrmLite.Dapper;
 
 namespace Jobbr.Storage.MsSql
 {
     public class MsSqlStorageProvider : IJobStorageProvider
     {
         private readonly JobbrMsSqlConfiguration _configuration;
+        private readonly OrmLiteConnectionFactory _ormLiteConnectionFactory;
 
         public MsSqlStorageProvider(JobbrMsSqlConfiguration configuration)
         {
             this._configuration = configuration;
+            _ormLiteConnectionFactory =
+                new OrmLiteConnectionFactory(configuration.ConnectionString, configuration.DialectProvider);
         }
 
         public override string ToString()
@@ -22,155 +27,185 @@ namespace Jobbr.Storage.MsSql
             return $"[{this.GetType().Name}, Schema: '{this._configuration.Schema}', Connection: '{this._configuration.ConnectionString}']";
         }
 
-        public List<Job> GetJobs(int page = 0, int pageSize = 50)
+        public List<Job> GetJobs(int page = 1, int pageSize = 50)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.Jobs ORDER BY CreatedDateTimeUtc ASC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            return GetFromDb(c =>
             {
-                var jobs = connection.Query<Job>(sql);
-
-                return jobs.ToList();
-            }
+                return c.SelectLazy<Job>().Skip(page * (pageSize - 1)).Take(pageSize).OrderBy(k => k.CreatedDateTimeUtc);
+            });
         }
 
         public void AddJob(Job job)
         {
-            var sql = $@"INSERT INTO {this._configuration.Schema}.Jobs ([UniqueName],[Title],[Type],[Parameters],[CreatedDateTimeUtc]) VALUES (@UniqueName, @Title, @Type, @Parameters, @UtcNow) SELECT CAST(SCOPE_IDENTITY() as int)";
+            DoDbWorkload(connection => connection.Insert(job));
+        }
 
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                var id = connection.Query<int>(sql, new {job.UniqueName, job.Title, job.Type, job.Parameters, DateTime.UtcNow,}).Single();
-                job.Id = id;
-            }
+        public void DeleteJob(long jobId)
+        {
+            DoDbWorkload(con => con.Delete<Job>(job => job.Id == jobId));
         }
 
         public JobRun GetLastJobRunByTriggerId(long jobId, long triggerId, DateTime utcNow)
         {
-            var sql = $"SELECT TOP 1 * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId AND [ActualStartDateTimeUtc] < @DateTimeNowUtc ORDER BY [ActualStartDateTimeUtc] DESC";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            var jobRun = this.GetScalarFromDb(con =>
             {
-                var jobRuns = connection.Query<JobRun>(sql, new
-                {
-                    TriggerId = triggerId,
-                    DateTimeNowUtc = utcNow
-                }).ToList();
+                return con.SelectLazy<JobRun>().FirstOrDefault(i => i.Id == jobId && i.ActualStartDateTimeUtc < utcNow);
+            });
 
-                return jobRuns.Any() ? jobRuns.FirstOrDefault() : null;
+            if (jobRun == null)
+            {
+                return null;
             }
+
+            var trigger =
+                GetScalarFromDb(con => con.SelectLazy<Trigger>().FirstOrDefault(j => j.JobId == jobRun.Id));
+
+            return new JobRun
+            {
+                Trigger = JobTriggerTriggerFactory.CreateTriggerFromDto(trigger),
+                ActualEndDateTimeUtc = jobRun.ActualEndDateTimeUtc,
+                EstimatedEndDateTimeUtc = jobRun.EstimatedEndDateTimeUtc,
+                Id = jobRun.Id,
+                Job = jobRun.Job,
+                State = jobRun.State,
+                ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc,
+                PlannedStartDateTimeUtc = jobRun.PlannedStartDateTimeUtc,
+                InstanceParameters = jobRun.InstanceParameters,
+                JobParameters = jobRun.JobParameters,
+                Pid = jobRun.Pid,
+                Progress = jobRun.Progress,
+            };
         }
 
         public JobRun GetNextJobRunByTriggerId(long jobId, long triggerId, DateTime utcNow)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId AND PlannedStartDateTimeUtc >= @DateTimeNowUtc AND State = @State ORDER BY [PlannedStartDateTimeUtc] ASC";
+            var jobRun = this.GetScalarFromDb(con => con.SelectLazy<JobRun>().Where(i => i.Trigger.Id == triggerId).OrderBy(p => p.PlannedStartDateTimeUtc).FirstOrDefault());
+            return jobRun;
+        }
 
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+        public PagedResult<JobRun> GetJobRuns(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null,
+            string query = null, params string[] sort)
+        {
+            AssertOnlyOneFilterIsActive(jobTypeFilter, jobUniqueNameFilter, query);
+
+            var items = GetFromDb(con =>
             {
-                var jobRuns =
-                    connection.Query<JobRun>(sql,
-                        new
-                        {
-                            TriggerId = triggerId,
-                            DateTimeNowUtc = utcNow,
-                            State = JobRunStates.Scheduled.ToString()
-                        }).ToList();
+                var jobRuns = con.SelectLazy<JobRun>();
+                if (jobTypeFilter != null)
+                {
+                    jobRuns = jobRuns.Where(w => w.Job.Type == jobTypeFilter);
+                }
 
-                return jobRuns.Any() ? jobRuns.FirstOrDefault() : null;
-            }
+                if (jobUniqueNameFilter != null)
+                {
+                    jobRuns = jobRuns.Where(w => w.Job.UniqueName == jobUniqueNameFilter);
+                }
+
+                if (query != null)
+                {
+                }
+
+                jobRuns = SortJobRuns(jobRuns, sort);
+                jobRuns = jobRuns.Take(pageSize).Skip(pageSize * (page - 1));
+                
+                return jobRuns.AsList();
+            });
+
+            return CreatePagedResult(page, pageSize, items);
+        }
+
+        private static PagedResult<T> CreatePagedResult<T>(int page, int pageSize, List<T> items)
+        {
+            return new PagedResult<T>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = items?.Count ?? 0
+            };
+        }
+
+        public PagedResult<JobRun> GetJobRunsByJobId(int jobId, int page = 1, int pageSize = 50, params string[] sort)
+        {
+            var jobRuns = GetFromDb(con =>
+            {
+                var jobs = con.SelectLazy<JobRun>().Where(s => s.Job.Id == jobId);
+                jobs = SortJobRuns(jobs, sort).Skip(pageSize * (page - 1)).Take(pageSize);
+
+                return jobs.AsList();
+            });
+
+            return CreatePagedResult(page, pageSize, jobRuns);
+        }
+
+        public PagedResult<JobRun> GetJobRunsByUserId(string userId, int page = 1, int pageSize = 50, string jobTypeFilter = null,
+            string jobUniqueNameFilter = null, params string[] sort)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PagedResult<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 1, int pageSize = 50, params string[] sort)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1, int pageSize = 50,
+            string jobTypeFilter = null, string jobUniqueNameFilter = null, params string[] sort)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null,
+            string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        {
+            throw new NotImplementedException();
         }
 
         public void AddJobRun(JobRun jobRun)
         {
-            var sql =
-                $@"INSERT INTO {this._configuration.Schema}.JobRuns ([JobId],[TriggerId],[JobParameters],[InstanceParameters],[PlannedStartDateTimeUtc],[ActualStartDateTimeUtc],[State])
-                          VALUES (@JobId,@TriggerId,@JobParameters,@InstanceParameters,@PlannedStartDateTimeUtc,@ActualStartDateTimeUtc,@State)
-                          SELECT CAST(SCOPE_IDENTITY() as int)";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                var jobRunObject =
-                    new
-                    {
-                        jobRun.JobId,
-                        jobRun.TriggerId,
-                        jobRun.JobParameters,
-                        jobRun.InstanceParameters,
-                        jobRun.PlannedStartDateTimeUtc,
-                        State = jobRun.State.ToString(),
-                        jobRun.ActualStartDateTimeUtc
-                    };
-
-                var id = connection.Query<int>(sql, jobRunObject).Single();
-
-                jobRun.Id = id;
-            }
+            this.DoDbWorkload(con => con.Insert(jobRun));
         }
 
         public List<JobRun> GetJobRuns(int page = 0, int pageSize = 50)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns ORDER BY PlannedStartDateTimeUtc DESC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                return connection.Query<JobRun>(sql).ToList();
-            }
+            return this.GetFromDb(con => con.SelectLazy<JobRun>().Skip(page * pageSize).Take(pageSize));
         }
 
         public void UpdateProgress(long jobRunId, double? progress)
         {
-            var sql = $@"UPDATE {this._configuration.Schema}.{"JobRuns"} SET [Progress] = @Progress WHERE [Id] = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                connection.Execute(sql, new {Id = jobRunId, Progress = progress});
-            }
+            this.DoDbWorkload(con => con.Update<JobRun>(new { Progress = progress }, p => p.Id == jobRunId));
         }
 
         public void Update(JobRun jobRun)
         {
             var fromDb = this.GetJobRunById(jobRun.Id);
 
-            var sql = $@"UPDATE {this._configuration.Schema}.{"JobRuns"} SET
-                                        [JobParameters] = @JobParameters,
-                                        [InstanceParameters] = @InstanceParameters,
-                                        [PlannedStartDateTimeUtc] = @PlannedStartDateTimeUtc,
-                                        [ActualStartDateTimeUtc] = @ActualStartDateTimeUtc,
-                                        [EstimatedEndDateTimeUtc] = @EstimatedEndDateTimeUtc,
-                                        [ActualEndDateTimeUtc] = @ActualEndDateTimeUtc,
-                                        [Progress] = @Progress,
-                                        [State] = @State,
-                                        [Pid] = @Pid
-                                    WHERE [Id] = @Id";
+            DoDbWorkload(con => con.Update(
+                new
+                {
+                    jobRun.Id,
+                    jobRun.JobParameters,
+                    jobRun.InstanceParameters,
+                    jobRun.PlannedStartDateTimeUtc,
+                    jobRun.Progress,
+                    jobRun.Pid,
+                    ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc ?? fromDb.ActualStartDateTimeUtc,
+                    EstimatedEndDateTimeUtc = jobRun.EstimatedEndDateTimeUtc ?? fromDb.EstimatedEndDateTimeUtc,
+                    ActualEndDateTimeUtc = jobRun.ActualEndDateTimeUtc ?? fromDb.ActualEndDateTimeUtc,
+                    State = jobRun.State.ToString()
+                }, job => job.Id == jobRun.Id
+            ));
+        }
 
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                connection.Execute(
-                    sql,
-                    new
-                    {
-                        jobRun.Id,
-                        jobRun.JobParameters,
-                        jobRun.InstanceParameters,
-                        jobRun.PlannedStartDateTimeUtc,
-                        jobRun.Progress,
-                        jobRun.Pid,
-                        ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc ?? fromDb.ActualStartDateTimeUtc,
-                        EstimatedEndDateTimeUtc = jobRun.EstimatedEndDateTimeUtc ?? fromDb.EstimatedEndDateTimeUtc,
-                        ActualEndDateTimeUtc = jobRun.ActualEndDateTimeUtc ?? fromDb.ActualEndDateTimeUtc,
-                        State = jobRun.State.ToString(),
-                    });
-            }
+        public PagedResult<Job> GetJobs(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null,
+            string query = null, params string[] sort)
+        {
+            throw new NotImplementedException();
         }
 
         public Job GetJobById(long id)
         {
-            var sql = $"SELECT TOP 1 * FROM {this._configuration.Schema}.Jobs WHERE [Id] = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                return connection.Query<Job>(sql, new {Id = id}).FirstOrDefault();
-            }
+            return GetScalarFromDb(con => con.SingleById<Job>(id));
         }
 
         public Job GetJobByUniqueName(string identifier)
@@ -179,37 +214,32 @@ namespace Jobbr.Storage.MsSql
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                return connection.Query<Job>(sql, new {UniqueName = identifier}).FirstOrDefault();
+                return connection.Query<Job>(sql, new { UniqueName = identifier }).FirstOrDefault();
             }
         }
 
         public JobRun GetJobRunById(long id)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [Id] = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                return connection.Query<JobRun>(sql, new {Id = id}).FirstOrDefault();
-            }
+            return GetScalarFromDb(con => con.SingleById<JobRun>(id));
         }
 
         public List<JobRun> GetJobRunsByUserId(string userId, int page = 0, int pageSize = 50)
         {
-            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserId = @Id ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserId = @Id ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                return connection.Query<JobRun>(sql, new {Id = userId}).ToList();
+                return connection.Query<JobRun>(sql, new { Id = userId }).ToList();
             }
         }
 
         public List<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 0, int pageSize = 50)
         {
-            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserDisplayName = @UserDisplayName ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserDisplayName = @UserDisplayName ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                return connection.Query<JobRun>(sql, new {UserDisplayName = userDisplayName }).ToList();
+                return connection.Query<JobRun>(sql, new { UserDisplayName = userDisplayName }).ToList();
             }
         }
 
@@ -237,6 +267,11 @@ namespace Jobbr.Storage.MsSql
                         DateTime.UtcNow
                     });
             }
+        }
+
+        public void DeleteTrigger(long jobId, long triggerId)
+        {
+            throw new NotImplementedException();
         }
 
         public void Update(long jobId, InstantTrigger trigger)
@@ -295,21 +330,21 @@ namespace Jobbr.Storage.MsSql
 
         public List<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 0, int pageSize = 50)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId ORDER BY PlannedStartDateTimeUtc DESC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId ORDER BY PlannedStartDateTimeUtc DESC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                return connection.Query<JobRun>(sql, new {TriggerId = triggerId}).ToList();
+                return connection.Query<JobRun>(sql, new { TriggerId = triggerId }).ToList();
             }
         }
 
         public List<JobRun> GetJobRunsByState(JobRunStates state, int page = 0, int pageSize = 50)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [State] = @State ORDER BY PlannedStartDateTimeUtc ASC OFFSET {page*pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [State] = @State ORDER BY PlannedStartDateTimeUtc ASC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                return connection.Query<JobRun>(sql, new {State = state.ToString()}).ToList();
+                return connection.Query<JobRun>(sql, new { State = state.ToString() }).ToList();
             }
         }
 
@@ -331,13 +366,19 @@ namespace Jobbr.Storage.MsSql
             this.InsertTrigger(trigger, TriggerType.Recurring, trigger.Definition, noParallelExecution: trigger.NoParallelExecution);
         }
 
+        public PagedResult<JobTriggerBase> GetActiveTriggers(int page = 1, int pageSize = 50, string jobTypeFilter = null,
+            string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        {
+            throw new NotImplementedException();
+        }
+
         public void DisableTrigger(long jobId, long triggerId)
         {
             var sql = $"UPDATE {this._configuration.Schema}.Triggers SET [IsActive] = @IsActive WHERE [Id] = @TriggerId";
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                connection.Execute(sql, new {TriggerId = triggerId, IsActive = false});
+                connection.Execute(sql, new { TriggerId = triggerId, IsActive = false });
             }
         }
 
@@ -347,7 +388,7 @@ namespace Jobbr.Storage.MsSql
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                connection.Execute(sql, new {TriggerId = triggerId, IsActive = true});
+                connection.Execute(sql, new { TriggerId = triggerId, IsActive = true });
             }
         }
 
@@ -365,7 +406,7 @@ namespace Jobbr.Storage.MsSql
 
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
-                using (var multi = connection.QueryMultiple(sql, new {JobId = jobId}))
+                using (var multi = connection.QueryMultiple(sql, new { JobId = jobId }))
                 {
                     var instantTriggers = multi.Read<InstantTrigger>().ToList();
                     var cronTriggers = multi.Read<RecurringTrigger>().ToList();
@@ -402,7 +443,7 @@ namespace Jobbr.Storage.MsSql
                     if (reader.Read())
                     {
                         var triggerType = reader.GetString(triggerTypeColumnIndex);
-                        
+
                         switch (triggerType)
                         {
                             case TriggerType.Instant:
@@ -424,6 +465,11 @@ namespace Jobbr.Storage.MsSql
             }
         }
 
+        public PagedResult<JobTriggerBase> GetTriggersByJobId(long jobId, int page = 1, int pageSize = 50)
+        {
+            throw new NotImplementedException();
+        }
+
         public List<JobTriggerBase> GetActiveTriggers()
         {
             var sql = string.Format(
@@ -435,7 +481,7 @@ namespace Jobbr.Storage.MsSql
                 TriggerType.Recurring,
                 TriggerType.Scheduled);
 
-            var param = new {};
+            var param = new { };
 
             return this.ExecuteSelectTriggerQuery(sql, param);
         }
@@ -517,6 +563,81 @@ namespace Jobbr.Storage.MsSql
             using (var connection = new SqlConnection(this._configuration.ConnectionString))
             {
                 return connection.ExecuteScalar<long>(sql);
+            }
+        }
+
+        private static void AssertOnlyOneFilterIsActive(string jobTypeFilter, string jobUniqueNameFilter, string query)
+        {
+            var sum = IsNull(jobTypeFilter) + IsNull(jobUniqueNameFilter) + IsNull(query);
+
+            if (sum > 1)
+            {
+                throw new InvalidOperationException("Only one filter is allowed");
+            }
+
+            int IsNull(string input)
+            {
+                return input == null ? 0 : 1;
+            }
+        }
+
+        private IEnumerable<JobRun> SortJobRuns(IEnumerable<JobRun> jobRuns, string[] sort)
+        {
+            foreach (var criterion in sort.Where(s => !string.IsNullOrWhiteSpace(s)))
+            {
+                jobRuns = criterion[0] != '-'
+                    ? jobRuns.OrderBy(_mapping[GetPropertyName(criterion)])
+                    : jobRuns.OrderByDescending(_mapping[GetPropertyName(criterion)]);
+            }
+
+            return jobRuns;
+
+            string GetPropertyName(string sortString)
+            {
+                var hasSign = sortString[0] == '+' || sortString[0] == '-';
+                return hasSign ? sortString.Substring(1, sortString.Length).ToLower() : sortString.ToLower();
+            }
+        }
+
+        private readonly Dictionary<string, Func<JobRun, object>> _mapping = new Dictionary<string, Func<JobRun, object>>
+        {
+            {"id", run => run.Id },
+            {"instanceparameters", run => run.InstanceParameters },
+            {"jobparameters", run => run.JobParameters },
+            {"pid", run => run.Pid },
+            {"plannedstartdatetimeutc", run => run.PlannedStartDateTimeUtc },
+            {"progress", run => run.Progress },
+            {"actualenddatetimeutc", run => run.ActualEndDateTimeUtc },
+            {"estimatedenddatetimeutc", run => run.EstimatedEndDateTimeUtc },
+            {"state", run => run.State },
+
+        };
+
+        private List<T> GetFromDb<T>(Func<IDbConnection, IEnumerable<T>> dbWork)
+        {
+            using (var connection = _ormLiteConnectionFactory.Open())
+            {
+                var jobs = dbWork(connection);
+
+                return jobs.AsList();
+            }
+        }
+
+        private T GetScalarFromDb<T>(Func<IDbConnection, T> dbWork)
+        {
+            using (var connection = _ormLiteConnectionFactory.Open())
+            {
+                var scalarFromDb = dbWork(connection);
+
+                return scalarFromDb;
+            }
+        }
+
+        private void DoDbWorkload(Action<IDbConnection> dbWork)
+        {
+            using (var connection = _ormLiteConnectionFactory.Open())
+            {
+                dbWork(connection);
             }
         }
     }

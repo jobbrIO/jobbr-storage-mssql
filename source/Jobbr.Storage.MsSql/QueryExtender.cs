@@ -10,7 +10,7 @@ namespace Jobbr.Storage.MsSql
     {
         private static readonly List<string> AllowedProperties = new List<string> {"", ""};
 
-        private static readonly Dictionary<string, Func<JobRun, object>> Mapping = new Dictionary<string, Func<JobRun, object>>
+        private static readonly Dictionary<string, Func<JobRun, object>> JobRunPropertyMapping = new Dictionary<string, Func<JobRun, object>>
         {
             {"id", run => run.Id },
             {"instanceparameters", run => run.InstanceParameters },
@@ -20,8 +20,18 @@ namespace Jobbr.Storage.MsSql
             {"progress", run => run.Progress },
             {"actualenddatetimeutc", run => run.ActualEndDateTimeUtc },
             {"estimatedenddatetimeutc", run => run.EstimatedEndDateTimeUtc },
-            {"state", run => run.State },
+            {"state", run => run.State }
+        };
 
+        private static readonly Dictionary<string, Func<Job, object>> JobPropertyMapping = new Dictionary<string, Func<Job, object>>
+        {
+            {"id", run => run.Id },
+            {"createddatetimeutc", run => run.CreatedDateTimeUtc },
+            {"parameters", run => run.Parameters },
+            {"title", run => run.Title },
+            {"type", run => run.Type },
+            {"uniquename", run => run.UniqueName },
+            {"updatedDatetimeutc", run => run.UpdatedDateTimeUtc },
         };
 
         public static IEnumerable<JobRun> JobRunQuery(IEnumerable<JobRun> jobRunQuery, string query)
@@ -35,8 +45,9 @@ namespace Jobbr.Storage.MsSql
             return jobRunQuery;
         }
 
-        public static IEnumerable<JobRun> SortFilteredJobRuns(int page, int pageSize, string jobTypeFilter, string jobUniqueNameFilter,
-            string query, string[] sort, IEnumerable<JobRun> jobRuns)
+        public static IEnumerable<JobRun> SortFilteredJobRuns(IEnumerable<JobRun> jobRuns, int page, int pageSize,
+            string jobTypeFilter, string jobUniqueNameFilter,
+            string query, string[] sort)
         {
             //// TODO: Doesnt belong here. Has to be its own class
             if (jobTypeFilter != null)
@@ -59,22 +70,59 @@ namespace Jobbr.Storage.MsSql
             return jobRuns;
         }
 
+        public static IEnumerable<Job> SortFilteredJobs(IEnumerable<Job> jobs, int page, int pageSize,
+            string jobTypeFilter, string jobUniqueNameFilter,
+            string query, string[] sort)
+        {
+            if (jobTypeFilter != null)
+            {
+                jobs = jobs.Where(w => w.Type == jobTypeFilter);
+            }
+
+            if (jobUniqueNameFilter != null)
+            {
+                jobs = jobs.Where(w => w.UniqueName == jobUniqueNameFilter);
+            }
+
+            if (query != null)
+            {
+                ////var jobRunQuery = JobRunQuery(jobRuns, query);
+            }
+
+            jobs = SortJobs(jobs, sort);
+            jobs = jobs.Take(pageSize).Skip(pageSize * (page - 1));
+            return jobs;
+        }
+
         public static IEnumerable<JobRun> SortJobRuns(IEnumerable<JobRun> jobRuns, string[] sort)
         {
             foreach (var criterion in sort.Where(s => !string.IsNullOrWhiteSpace(s)))
             {
                 jobRuns = criterion[0] != '-'
-                    ? jobRuns.OrderBy(Mapping[GetPropertyName(criterion)])
-                    : jobRuns.OrderByDescending(Mapping[GetPropertyName(criterion)]);
+                    ? jobRuns.OrderBy(JobRunPropertyMapping[GetPropertyName(criterion)])
+                    : jobRuns.OrderByDescending(JobRunPropertyMapping[GetPropertyName(criterion)]);
             }
 
             return jobRuns;
+        }
 
-            string GetPropertyName(string sortString)
+        public static IEnumerable<Job> SortJobs(IEnumerable<Job> jobs, string[] sort)
+        {
+            foreach (var criterion in sort.Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                var hasSign = sortString[0] == '+' || sortString[0] == '-';
-                return hasSign ? sortString.Substring(1, sortString.Length).ToLower() : sortString.ToLower();
+                jobs = criterion[0] != '-'
+                    ? jobs.OrderBy(JobPropertyMapping[GetPropertyName(criterion)])
+                    : jobs.OrderByDescending(JobPropertyMapping[GetPropertyName(criterion)]);
             }
+
+            return jobs;
+
+        }
+
+        private static string GetPropertyName(string sortString)
+        {
+            var hasSign = sortString[0] == '+' || sortString[0] == '-';
+            return hasSign ? sortString.Substring(1, sortString.Length).ToLower() : sortString.ToLower();
         }
     }
 }

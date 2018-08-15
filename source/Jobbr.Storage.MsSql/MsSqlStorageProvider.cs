@@ -91,7 +91,7 @@ namespace Jobbr.Storage.MsSql
             var items = GetFromDb(con =>
             {
                 var jobRuns = con.SelectLazy<JobRun>();
-                jobRuns = QueryExtender.SortFilteredJobRuns(page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort, jobRuns);
+                jobRuns = QueryExtender.SortFilteredJobRuns(jobRuns, page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
 
                 return jobRuns.AsList();
             });
@@ -174,7 +174,17 @@ namespace Jobbr.Storage.MsSql
         public PagedResult<Job> GetJobs(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null,
             string query = null, params string[] sort)
         {
-            throw new NotImplementedException();
+            AssertOnlyOneFilterIsActive(jobTypeFilter, jobUniqueNameFilter, query);
+
+            var items = GetFromDb(con =>
+            {
+                var jobs = con.SelectLazy<Job>();
+                jobs = QueryExtender.SortFilteredJobs(jobs, page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
+
+                return jobs.AsList();
+            });
+
+            return CreatePagedResult(page, pageSize, items);
         }
 
         public Job GetJobById(long id)
@@ -184,12 +194,7 @@ namespace Jobbr.Storage.MsSql
 
         public Job GetJobByUniqueName(string identifier)
         {
-            var sql = $"SELECT TOP 1 * FROM {this._configuration.Schema}.Jobs WHERE [UniqueName] = @UniqueName";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                return connection.Query<Job>(sql, new { UniqueName = identifier }).FirstOrDefault();
-            }
+            return GetScalarFromDb(con => con.Single<Job>(new {UniqueName = identifier}));
         }
 
         public JobRun GetJobRunById(long id)
@@ -205,6 +210,8 @@ namespace Jobbr.Storage.MsSql
             {
                 return connection.Query<JobRun>(sql, new { Id = userId }).ToList();
             }
+
+            ////return GetFromDb(con => con.SelectLazy<JobRun>().Join()
         }
 
         public List<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 0, int pageSize = 50)

@@ -91,38 +91,12 @@ namespace Jobbr.Storage.MsSql
             var items = GetFromDb(con =>
             {
                 var jobRuns = con.SelectLazy<JobRun>();
-                if (jobTypeFilter != null)
-                {
-                    jobRuns = jobRuns.Where(w => w.Job.Type == jobTypeFilter);
-                }
+                jobRuns = QueryExtender.SortFilteredJobRuns(page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort, jobRuns);
 
-                if (jobUniqueNameFilter != null)
-                {
-                    jobRuns = jobRuns.Where(w => w.Job.UniqueName == jobUniqueNameFilter);
-                }
-
-                if (query != null)
-                {
-                }
-
-                jobRuns = SortJobRuns(jobRuns, sort);
-                jobRuns = jobRuns.Take(pageSize).Skip(pageSize * (page - 1));
-                
                 return jobRuns.AsList();
             });
 
             return CreatePagedResult(page, pageSize, items);
-        }
-
-        private static PagedResult<T> CreatePagedResult<T>(int page, int pageSize, List<T> items)
-        {
-            return new PagedResult<T>
-            {
-                Items = items,
-                Page = page,
-                PageSize = pageSize,
-                TotalItems = items?.Count ?? 0
-            };
         }
 
         public PagedResult<JobRun> GetJobRunsByJobId(int jobId, int page = 1, int pageSize = 50, params string[] sort)
@@ -130,7 +104,7 @@ namespace Jobbr.Storage.MsSql
             var jobRuns = GetFromDb(con =>
             {
                 var jobs = con.SelectLazy<JobRun>().Where(s => s.Job.Id == jobId);
-                jobs = SortJobRuns(jobs, sort).Skip(pageSize * (page - 1)).Take(pageSize);
+                jobs = QueryExtender.SortJobRuns(jobs, sort).Skip(pageSize * (page - 1)).Take(pageSize);
 
                 return jobs.AsList();
             });
@@ -542,6 +516,17 @@ namespace Jobbr.Storage.MsSql
             }
         }
 
+        private static PagedResult<T> CreatePagedResult<T>(int page, int pageSize, List<T> items)
+        {
+            return new PagedResult<T>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = items?.Count ?? 0
+            };
+        }
+
         public bool IsAvailable()
         {
             try
@@ -580,38 +565,6 @@ namespace Jobbr.Storage.MsSql
                 return input == null ? 0 : 1;
             }
         }
-
-        private IEnumerable<JobRun> SortJobRuns(IEnumerable<JobRun> jobRuns, string[] sort)
-        {
-            foreach (var criterion in sort.Where(s => !string.IsNullOrWhiteSpace(s)))
-            {
-                jobRuns = criterion[0] != '-'
-                    ? jobRuns.OrderBy(_mapping[GetPropertyName(criterion)])
-                    : jobRuns.OrderByDescending(_mapping[GetPropertyName(criterion)]);
-            }
-
-            return jobRuns;
-
-            string GetPropertyName(string sortString)
-            {
-                var hasSign = sortString[0] == '+' || sortString[0] == '-';
-                return hasSign ? sortString.Substring(1, sortString.Length).ToLower() : sortString.ToLower();
-            }
-        }
-
-        private readonly Dictionary<string, Func<JobRun, object>> _mapping = new Dictionary<string, Func<JobRun, object>>
-        {
-            {"id", run => run.Id },
-            {"instanceparameters", run => run.InstanceParameters },
-            {"jobparameters", run => run.JobParameters },
-            {"pid", run => run.Pid },
-            {"plannedstartdatetimeutc", run => run.PlannedStartDateTimeUtc },
-            {"progress", run => run.Progress },
-            {"actualenddatetimeutc", run => run.ActualEndDateTimeUtc },
-            {"estimatedenddatetimeutc", run => run.EstimatedEndDateTimeUtc },
-            {"state", run => run.State },
-
-        };
 
         private List<T> GetFromDb<T>(Func<IDbConnection, IEnumerable<T>> dbWork)
         {

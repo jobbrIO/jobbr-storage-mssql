@@ -34,8 +34,8 @@ builder.AddMsSqlStorage(config =>
     // Default schema is "Jobbr", change if you want
     config.Schema = "Own";
 
-	// Configure your SqlDialect
-	configuration.DialectProvider = ServiceStack.OrmLite.SqlServerDialect.Provider;
+    // Configure your SqlDialect
+    configuration.DialectProvider = ServiceStack.OrmLite.SqlServerDialect.Provider;
 });
 
 server.Start();

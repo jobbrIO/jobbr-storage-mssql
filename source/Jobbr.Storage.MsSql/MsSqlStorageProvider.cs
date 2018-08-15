@@ -136,7 +136,7 @@ namespace Jobbr.Storage.MsSql
         public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null,
             string jobUniqueNameFilter = null, string query = null, params string[] sort)
         {
-
+            throw new NotImplementedException();
         }
 
         public void AddJobRun(JobRun jobRun)
@@ -385,96 +385,34 @@ namespace Jobbr.Storage.MsSql
 
         public List<JobTriggerBase> GetTriggersByJobId(long jobId)
         {
-            var sql = string.Format(
-                @"SELECT * FROM {0}.Triggers where TriggerType = '{1}' AND JobId = @JobId
-                  SELECT * FROM {0}.Triggers where TriggerType = '{2}' AND JobId = @JobId
-                  SELECT * FROM {0}.Triggers where TriggerType = '{3}' AND JobId = @JobId",
-                this._configuration.Schema,
-                TriggerType.Instant,
-                TriggerType.Recurring,
-                TriggerType.Scheduled);
-
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                using (var multi = connection.QueryMultiple(sql, new { JobId = jobId }))
-                {
-                    var instantTriggers = multi.Read<InstantTrigger>().ToList();
-                    var cronTriggers = multi.Read<RecurringTrigger>().ToList();
-                    var dateTimeTriggers = multi.Read<ScheduledTrigger>().ToList();
-
-                    var result = new List<JobTriggerBase>();
-
-                    result.AddRange(instantTriggers);
-                    result.AddRange(cronTriggers);
-                    result.AddRange(dateTimeTriggers);
-
-                    return result.OrderBy(t => t.Id).ToList();
-                }
-            }
+            return GetFromDb(con => con.Select<Trigger>().Where(t => t.JobId == jobId))
+                .Select(JobTriggerTriggerFactory.CreateTriggerFromDto)
+                .ToList();
         }
 
         public JobTriggerBase GetTriggerById(long jobId, long triggerId)
         {
-            var sql = $@"SELECT * FROM {this._configuration.Schema}.Triggers WHERE Id = @Id";
-            var param = new { Id = triggerId };
+            var trigger = GetScalarFromDb(c => c.SingleById<Trigger>(jobId));
 
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                using (var reader = connection.ExecuteReader(sql, param))
-                {
-                    var instantTriggerParser = reader.GetRowParser<JobTriggerBase>(typeof(InstantTrigger));
-                    var scheduledTriggerParser = reader.GetRowParser<JobTriggerBase>(typeof(ScheduledTrigger));
-                    var recurringTriggerParser = reader.GetRowParser<JobTriggerBase>(typeof(RecurringTrigger));
-
-                    var triggerTypeColumnIndex = reader.GetOrdinal("TriggerType");
-
-                    JobTriggerBase trigger = null;
-
-                    if (reader.Read())
-                    {
-                        var triggerType = reader.GetString(triggerTypeColumnIndex);
-
-                        switch (triggerType)
-                        {
-                            case TriggerType.Instant:
-                                trigger = instantTriggerParser(reader);
-                                break;
-
-                            case TriggerType.Scheduled:
-                                trigger = scheduledTriggerParser(reader);
-                                break;
-
-                            case TriggerType.Recurring:
-                                trigger = recurringTriggerParser(reader);
-                                break;
-                        }
-                    }
-
-                    return trigger;
-                }
-            }
+            return JobTriggerTriggerFactory.CreateTriggerFromDto(trigger);
         }
 
         public PagedResult<JobTriggerBase> GetTriggersByJobId(long jobId, int page = 1, int pageSize = 50)
         {
-            throw new NotImplementedException();
+            var triggers = GetFromDb(con => con.Select<Trigger>().Where(t => t.JobId == jobId))
+                .Skip(pageSize * (page - 1))
+                .Take(pageSize)
+                .Select(JobTriggerTriggerFactory.CreateTriggerFromDto)
+                .ToList();
+
+            return CreatePagedResult(page, pageSize, triggers);
         }
 
         public List<JobTriggerBase> GetActiveTriggers()
         {
-            var sql = string.Format(
-                @"SELECT * FROM {0}.Triggers where TriggerType = '{1}' AND IsActive = 1
-                  SELECT * FROM {0}.Triggers where TriggerType = '{2}' AND IsActive = 1
-                  SELECT * FROM {0}.Triggers where TriggerType = '{3}' AND IsActive = 1",
-                this._configuration.Schema,
-                TriggerType.Instant,
-                TriggerType.Recurring,
-                TriggerType.Scheduled);
-
-            var param = new { };
-
-            return this.ExecuteSelectTriggerQuery(sql, param);
+            return GetFromDb(con => con.Select<Trigger>().Where(t => t.IsActive))
+                .Select(JobTriggerTriggerFactory.CreateTriggerFromDto)
+                .ToList();
         }
 
         private PagedResult<JobRun> GetJobRunsByCriteria<TCriterion>(

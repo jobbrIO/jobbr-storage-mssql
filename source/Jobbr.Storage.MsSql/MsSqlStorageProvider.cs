@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.JobStorage.Model;
+using ServiceStack;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.Dapper;
 
@@ -115,18 +116,21 @@ namespace Jobbr.Storage.MsSql
         public PagedResult<JobRun> GetJobRunsByUserId(string userId, int page = 1, int pageSize = 50, string jobTypeFilter = null,
             string jobUniqueNameFilter = null, params string[] sort)
         {
-            throw new NotImplementedException();
+            return GetJobRunsByCriteria<Trigger>(crit => crit.UserId == userId,
+                s => s.JobId, page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 1, int pageSize = 50, params string[] sort)
         {
-            throw new NotImplementedException();
+            return GetJobRunsByCriteria<Trigger>(crit => crit.Id == triggerId,
+                s => s.JobId, page, pageSize, null, null, sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1, int pageSize = 50,
             string jobTypeFilter = null, string jobUniqueNameFilter = null, params string[] sort)
         {
-            throw new NotImplementedException();
+            return GetJobRunsByCriteria<Trigger>(crit => crit.UserDisplayName == userDisplayName,
+                s => s.JobId, page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null,
@@ -465,6 +469,33 @@ namespace Jobbr.Storage.MsSql
             var param = new { };
 
             return this.ExecuteSelectTriggerQuery(sql, param);
+        }
+
+        private PagedResult<JobRun> GetJobRunsByCriteria<TCriterion>(
+            Func<TCriterion, bool> filter,
+            Func<TCriterion, long> idSelector, 
+            int page = 1, 
+            int pageSize = 50,
+            string jobTypeFilter = null, 
+            string jobUniqueNameFilter = null, 
+            params string[] sort)
+        {
+            var jobRuns = GetFromDb(con =>
+            {
+                // First get the corresponding JobRun from the TriggerId, which is defined in the trigger
+                var triggers = con.SelectLazy<TCriterion>().Where(filter);
+                var correspondingJobRunIds = triggers.Select(idSelector).Distinct().AsList();
+
+                // Now get every jobrun
+                var jobs = con.SelectLazy<JobRun>().Where(p => correspondingJobRunIds.Contains(p.Id))
+                    .Skip(pageSize * (page - 1))
+                    .Take(pageSize);
+                jobs = QueryExtender.SortFilteredJobRuns(jobs, page, pageSize, jobTypeFilter, jobUniqueNameFilter, null, sort);
+
+                return jobs.AsList();
+            });
+
+            return CreatePagedResult(page, pageSize, jobRuns);
         }
 
         private List<JobTriggerBase> ExecuteSelectTriggerQuery(string sql, object param)

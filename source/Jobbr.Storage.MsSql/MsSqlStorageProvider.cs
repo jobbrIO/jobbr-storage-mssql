@@ -136,7 +136,7 @@ namespace Jobbr.Storage.MsSql
         public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null,
             string jobUniqueNameFilter = null, string query = null, params string[] sort)
         {
-            throw new NotImplementedException();
+
         }
 
         public void AddJobRun(JobRun jobRun)
@@ -256,7 +256,7 @@ namespace Jobbr.Storage.MsSql
 
         public void DeleteTrigger(long jobId, long triggerId)
         {
-            throw new NotImplementedException();
+            DoDbWorkload(con => con.DeleteById<Trigger>(triggerId));
         }
 
         public void Update(long jobId, InstantTrigger trigger)
@@ -351,10 +351,16 @@ namespace Jobbr.Storage.MsSql
             this.InsertTrigger(trigger, TriggerType.Recurring, trigger.Definition, noParallelExecution: trigger.NoParallelExecution);
         }
 
-        public PagedResult<JobTriggerBase> GetActiveTriggers(int page = 1, int pageSize = 50, string jobTypeFilter = null,
+        public PagedResult<JobTriggerBase> GetActiveTriggers(int page = 1, int pageSize = 50,
+            string jobTypeFilter = null,
             string jobUniqueNameFilter = null, string query = null, params string[] sort)
         {
-            throw new NotImplementedException();
+            var activeTrigger = GetFromDb(con => con.Select<Trigger>().Where(t => t.IsActive));
+            var trigger = activeTrigger.Select(JobTriggerTriggerFactory.CreateTriggerFromDto);
+
+            // TODO: JobTypeFilter, JobUniqueNameFilter, Query, Sort implement
+
+            return CreatePagedResult(page, pageSize, trigger.ToList());
         }
 
         public void DisableTrigger(long jobId, long triggerId)
@@ -498,25 +504,23 @@ namespace Jobbr.Storage.MsSql
             return CreatePagedResult(page, pageSize, jobRuns);
         }
 
-        private List<JobTriggerBase> ExecuteSelectTriggerQuery(string sql, object param)
+        public bool IsAvailable()
         {
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            try
             {
-                using (var multi = connection.QueryMultiple(sql, param))
-                {
-                    var instantTriggers = multi.Read<InstantTrigger>().ToList();
-                    var recurringTriggers = multi.Read<RecurringTrigger>().ToList();
-                    var scheduledTriggers = multi.Read<ScheduledTrigger>().ToList();
-
-                    var result = new List<JobTriggerBase>();
-
-                    result.AddRange(instantTriggers);
-                    result.AddRange(recurringTriggers);
-                    result.AddRange(scheduledTriggers);
-
-                    return result.ToList();
-                }
+                this.GetJobs(0, 1);
             }
+            catch
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public long GetJobsCount()
+        {
+            return GetScalarFromDb(con => con.Count<Job>());
         }
 
         private void InsertTrigger(JobTriggerBase trigger, string type, string definition = "", DateTime? startDateTimeUtc = null, DateTime? endDateTimeUtc = null, int DelayedMinutes = 0, bool noParallelExecution = false)
@@ -554,6 +558,27 @@ namespace Jobbr.Storage.MsSql
             }
         }
 
+        private List<JobTriggerBase> ExecuteSelectTriggerQuery(string sql, object param)
+        {
+            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            {
+                using (var multi = connection.QueryMultiple(sql, param))
+                {
+                    var instantTriggers = multi.Read<InstantTrigger>().ToList();
+                    var recurringTriggers = multi.Read<RecurringTrigger>().ToList();
+                    var scheduledTriggers = multi.Read<ScheduledTrigger>().ToList();
+
+                    var result = new List<JobTriggerBase>();
+
+                    result.AddRange(instantTriggers);
+                    result.AddRange(recurringTriggers);
+                    result.AddRange(scheduledTriggers);
+
+                    return result.ToList();
+                }
+            }
+        }
+
         private static PagedResult<T> CreatePagedResult<T>(int page, int pageSize, List<T> items)
         {
             return new PagedResult<T>
@@ -563,30 +588,6 @@ namespace Jobbr.Storage.MsSql
                 PageSize = pageSize,
                 TotalItems = items?.Count ?? 0
             };
-        }
-
-        public bool IsAvailable()
-        {
-            try
-            {
-                this.GetJobs(0, 1);
-            }
-            catch
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public long GetJobsCount()
-        {
-            var sql = $@"SELECT COUNT(*) FROM {this._configuration.Schema}.Jobs";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
-            {
-                return connection.ExecuteScalar<long>(sql);
-            }
         }
 
         private static void AssertOnlyOneFilterIsActive(string jobTypeFilter, string jobUniqueNameFilter, string query)

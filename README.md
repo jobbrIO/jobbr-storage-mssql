@@ -33,6 +33,9 @@ builder.AddMsSqlStorage(config =>
 
     // Default schema is "Jobbr", change if you want
     config.Schema = "Own";
+
+	// Configure your SqlDialect
+	configuration.DialectProvider = ServiceStack.OrmLite.SqlServerDialect.Provider;
 });
 
 server.Start();
@@ -49,8 +52,8 @@ This software is licenced under GPLv3. See [LICENSE](LICENSE), and the related l
 # Acknowledgements
 This extension is built using the following great open source projects
 
-* [Dapper](https://github.com/StackExchange/Dapper) 
-  [(Apache-2.0)](https://github.com/StackExchange/Dapper/blob/master/License.txt)
+* [OrmLite](https://github.com/ServiceStack/ServiceStack.OrmLite) 
+  [(GNU Affero General Public License)](https://github.com/ServiceStack/ServiceStack.OrmLite/blob/master/license.txt)
 * [LibLog](https://github.com/damianh/LibLog) 
   [(MIT)](https://github.com/damianh/LibLog/blob/master/licence.txt)
 

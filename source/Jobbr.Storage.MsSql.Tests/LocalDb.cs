@@ -41,33 +41,35 @@ namespace Jobbr.Storage.MsSql.Tests
         private void CreateDatabase()
         {
             // ReSharper disable once AssignNullToNotNullAttribute
-            Console.WriteLine("Creating database with name " + DatabaseName);
-            OutputFolder = GetOutputFolder();
-            var mdfFilename = $"{DatabaseName}.mdf";
-            DatabaseMdfPath = Path.Combine(OutputFolder, mdfFilename);
-            DatabaseLogPath = Path.Combine(OutputFolder, $"{DatabaseName}_log.ldf");
+            //Console.WriteLine("Creating database with name " + DatabaseName);
+            //OutputFolder = GetOutputFolder();
+            //var mdfFilename = $"{DatabaseName}.mdf";
+            //DatabaseMdfPath = Path.Combine(OutputFolder, mdfFilename);
+            //DatabaseLogPath = Path.Combine(OutputFolder, $"{DatabaseName}_log.ldf");
 
-            if (!Directory.Exists(OutputFolder))
-            {
-                Directory.CreateDirectory(OutputFolder);
-            }
-            else
-            {
-                DeleteDatabaseFiles();
-            }
+            //if (!Directory.Exists(OutputFolder))
+            //{
+            //    Directory.CreateDirectory(OutputFolder);
+            //}
+            //else
+            //{
+            //    DeleteDatabaseFiles();
+            //}
 
-            const string connectionString = @"Data Source=(localdb)\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=False;TrustServerCertificate=True";
+            //const string connectionString = @"Data Source=(localdb)\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=False;TrustServerCertificate=True";
+            const string connectionString = "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
 
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                var cmd = connection.CreateCommand();
-                DetachDatabase();
-                cmd.CommandText = $"CREATE DATABASE [{DatabaseName}] ON (NAME = N'{DatabaseName}', FILENAME = '{DatabaseMdfPath}')";
-                cmd.ExecuteNonQuery();
-            }
+            //using (var connection = new SqlConnection(connectionString))
+            //{
+            //    connection.Open();
+            //    var cmd = connection.CreateCommand();
+            //    DetachDatabase();
+            //    cmd.CommandText = $"CREATE DATABASE [{DatabaseName}] ON (NAME = N'{DatabaseName}', FILENAME = '{DatabaseMdfPath}')";
+            //    cmd.ExecuteNonQuery();
+            //}
 
-            ConnectionStringName = $@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDBFileName={DatabaseMdfPath};Initial Catalog={DatabaseName};Integrated Security=True;";
+            //ConnectionStringName = $@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDBFileName={DatabaseMdfPath};Initial Catalog={DatabaseName};Integrated Security=True;";
+            ConnectionStringName = connectionString;
         }
 
         private static string GetOutputFolder()

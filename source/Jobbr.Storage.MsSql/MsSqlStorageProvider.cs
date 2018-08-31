@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.JobStorage.Model;
+using Jobbr.Storage.MsSql.Mapping;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.Dapper;
@@ -18,9 +19,20 @@ namespace Jobbr.Storage.MsSql
 
         public MsSqlStorageProvider(JobbrMsSqlConfiguration configuration)
         {
-            this._configuration = configuration;
-            _ormLiteConnectionFactory =
-                new OrmLiteConnectionFactory(configuration.ConnectionString, configuration.DialectProvider);
+            _configuration = configuration;
+            _ormLiteConnectionFactory = new OrmLiteConnectionFactory(configuration.ConnectionString, configuration.DialectProvider);
+
+            CreateTables();
+        }
+
+        private void CreateTables()
+        {
+            using (var session = _ormLiteConnectionFactory.OpenDbConnection())
+            {
+                session.CreateTableIfNotExists<Entities.Job>();
+                session.CreateTableIfNotExists<Entities.JobRun>();
+                session.CreateTableIfNotExists<Entities.Trigger>();
+            }
         }
 
         public override string ToString()
@@ -32,25 +44,34 @@ namespace Jobbr.Storage.MsSql
         {
             return GetFromDb(c =>
             {
-                return c.SelectLazy<Job>().Skip(page * (pageSize - 1)).Take(pageSize).OrderBy(k => k.CreatedDateTimeUtc);
+                var entities = c.SelectLazy<Entities.Job>().Skip(page * (pageSize - 1)).Take(pageSize).OrderBy(k => k.CreatedDateTimeUtc);
+
+                return entities.Select(s => s.ToModel()).ToList();
             });
         }
 
         public void AddJob(Job job)
         {
-            DoDbWorkload(connection => connection.Insert(job));
+            var entity = job.ToEntity();
+
+            using (var session = _ormLiteConnectionFactory.Open())
+            {
+                job.Id = session.Insert(entity, true);
+            }
         }
 
         public void DeleteJob(long jobId)
         {
-            DoDbWorkload(con => con.Delete<Job>(job => job.Id == jobId));
+            Db(con => con.Delete<Entities.Job>(job => job.Id == jobId));
         }
 
         public JobRun GetLastJobRunByTriggerId(long jobId, long triggerId, DateTime utcNow)
         {
             var jobRun = this.GetScalarFromDb(con =>
             {
-                return con.SelectLazy<JobRun>().FirstOrDefault(i => i.Id == jobId && i.ActualStartDateTimeUtc < utcNow);
+                con.Select<Entities.JobRunInfo>(con.From<Entities.JobRun>().Join<Trigger>().Join<Job>());
+
+                return con.SelectLazy<Entities.JobRun>().FirstOrDefault(i => i.Id == jobId && i.ActualStartDateTimeUtc < utcNow);
             });
 
             if (jobRun == null)
@@ -58,8 +79,7 @@ namespace Jobbr.Storage.MsSql
                 return null;
             }
 
-            var trigger =
-                GetScalarFromDb(con => con.SelectLazy<Trigger>().FirstOrDefault(j => j.JobId == jobRun.Id));
+            var trigger = GetScalarFromDb(con => con.SelectLazy<Trigger>().FirstOrDefault(j => j.JobId == jobRun.Id));
 
             return new JobRun
             {
@@ -67,7 +87,7 @@ namespace Jobbr.Storage.MsSql
                 ActualEndDateTimeUtc = jobRun.ActualEndDateTimeUtc,
                 EstimatedEndDateTimeUtc = jobRun.EstimatedEndDateTimeUtc,
                 Id = jobRun.Id,
-                Job = jobRun.Job,
+                //Job = jobRun.Job,
                 State = jobRun.State,
                 ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc,
                 PlannedStartDateTimeUtc = jobRun.PlannedStartDateTimeUtc,
@@ -141,7 +161,7 @@ namespace Jobbr.Storage.MsSql
 
         public void AddJobRun(JobRun jobRun)
         {
-            this.DoDbWorkload(con => con.Insert(jobRun));
+            this.Db(con => con.Insert(jobRun));
         }
 
         public List<JobRun> GetJobRuns(int page = 0, int pageSize = 50)
@@ -151,14 +171,14 @@ namespace Jobbr.Storage.MsSql
 
         public void UpdateProgress(long jobRunId, double? progress)
         {
-            this.DoDbWorkload(con => con.Update<JobRun>(new { Progress = progress }, p => p.Id == jobRunId));
+            this.Db(con => con.Update<JobRun>(new { Progress = progress }, p => p.Id == jobRunId));
         }
 
         public void Update(JobRun jobRun)
         {
             var fromDb = this.GetJobRunById(jobRun.Id);
 
-            DoDbWorkload(con => con.Update(
+            Db(con => con.Update(
                 new
                 {
                     jobRun.Id,
@@ -193,7 +213,9 @@ namespace Jobbr.Storage.MsSql
 
         public Job GetJobById(long id)
         {
-            return GetScalarFromDb(con => con.SingleById<Job>(id));
+            var entity = GetScalarFromDb(con => con.SingleById<Entities.Job>(id));
+
+            return entity.ToModel();
         }
 
         public Job GetJobByUniqueName(string identifier)
@@ -256,7 +278,7 @@ namespace Jobbr.Storage.MsSql
 
         public void DeleteTrigger(long jobId, long triggerId)
         {
-            DoDbWorkload(con => con.DeleteById<Trigger>(triggerId));
+            Db(con => con.DeleteById<Trigger>(triggerId));
         }
 
         public void Update(long jobId, InstantTrigger trigger)
@@ -563,7 +585,7 @@ namespace Jobbr.Storage.MsSql
             }
         }
 
-        private void DoDbWorkload(Action<IDbConnection> dbWork)
+        private void Db(Action<IDbConnection> dbWork)
         {
             using (var connection = _ormLiteConnectionFactory.Open())
             {

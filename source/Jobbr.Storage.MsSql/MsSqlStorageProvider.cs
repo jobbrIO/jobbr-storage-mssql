@@ -5,29 +5,31 @@ using System.Data.SqlClient;
 using System.Linq;
 using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.JobStorage.Model;
+using Jobbr.Storage.MsSql.Entities;
 using Jobbr.Storage.MsSql.Mapping;
-using ServiceStack;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.Dapper;
+using Job = Jobbr.ComponentModel.JobStorage.Model.Job;
+using JobRun = Jobbr.ComponentModel.JobStorage.Model.JobRun;
 
 namespace Jobbr.Storage.MsSql
 {
     public class MsSqlStorageProvider : IJobStorageProvider
     {
-        private readonly JobbrMsSqlConfiguration _configuration;
-        private readonly OrmLiteConnectionFactory _ormLiteConnectionFactory;
+        private readonly JobbrMsSqlConfiguration configuration;
+        private readonly OrmLiteConnectionFactory ormLiteConnectionFactory;
 
         public MsSqlStorageProvider(JobbrMsSqlConfiguration configuration)
         {
-            _configuration = configuration;
-            _ormLiteConnectionFactory = new OrmLiteConnectionFactory(configuration.ConnectionString, configuration.DialectProvider);
+            this.configuration = configuration;
+            this.ormLiteConnectionFactory = new OrmLiteConnectionFactory(configuration.ConnectionString, configuration.DialectProvider);
 
-            CreateTables();
+            this.CreateTables();
         }
 
         private void CreateTables()
         {
-            using (var session = _ormLiteConnectionFactory.OpenDbConnection())
+            using (var session = this.ormLiteConnectionFactory.OpenDbConnection())
             {
                 session.CreateTableIfNotExists<Entities.Job>();
                 session.CreateTableIfNotExists<Entities.JobRun>();
@@ -37,24 +39,24 @@ namespace Jobbr.Storage.MsSql
 
         public override string ToString()
         {
-            return $"[{this.GetType().Name}, Schema: '{this._configuration.Schema}', Connection: '{this._configuration.ConnectionString}']";
+            return $"[{this.GetType().Name}, Schema: '{this.configuration.Schema}', Connection: '{this.configuration.ConnectionString}']";
         }
 
         public List<Job> GetJobs(int page = 1, int pageSize = 50)
         {
-            return GetFromDb(c =>
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                var entities = c.SelectLazy<Entities.Job>().Skip(page * (pageSize - 1)).Take(pageSize).OrderBy(k => k.CreatedDateTimeUtc);
+                var entities = connection.SelectLazy<Entities.Job>().Skip((page - 1) * pageSize).Take(pageSize).OrderBy(k => k.CreatedDateTimeUtc);
 
                 return entities.Select(s => s.ToModel()).ToList();
-            });
+            }
         }
 
         public void AddJob(Job job)
         {
             var entity = job.ToEntity();
 
-            using (var session = _ormLiteConnectionFactory.Open())
+            using (var session = this.ormLiteConnectionFactory.Open())
             {
                 job.Id = session.Insert(entity, true);
             }
@@ -62,46 +64,41 @@ namespace Jobbr.Storage.MsSql
 
         public void DeleteJob(long jobId)
         {
-            Db(con => con.Delete<Entities.Job>(job => job.Id == jobId));
+            this.Db(con => con.Delete<Entities.Job>(job => job.Id == jobId));
         }
 
         public JobRun GetLastJobRunByTriggerId(long jobId, long triggerId, DateTime utcNow)
         {
-            var jobRun = this.GetScalarFromDb(con =>
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                con.Select<Entities.JobRunInfo>(con.From<Entities.JobRun>().Join<Trigger>().Join<Job>());
-
-                return con.SelectLazy<Entities.JobRun>().FirstOrDefault(i => i.Id == jobId && i.ActualStartDateTimeUtc < utcNow);
-            });
-
-            if (jobRun == null)
-            {
-                return null;
+                return connection.Select<JobRunInfo>(
+                        connection.From<Entities.JobRun>()
+                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
+                            .Where(p => p.PlannedStartDateTimeUtc >= utcNow)
+                            .OrderBy(o => o.PlannedStartDateTimeUtc))
+                            .Take(1)
+                    .Select(s => s.ToModel())
+                    .FirstOrDefault();
             }
-
-            var trigger = GetScalarFromDb(con => con.SelectLazy<Trigger>().FirstOrDefault(j => j.JobId == jobRun.Id));
-
-            return new JobRun
-            {
-                Trigger = JobTriggerTriggerFactory.CreateTriggerFromDto(trigger),
-                ActualEndDateTimeUtc = jobRun.ActualEndDateTimeUtc,
-                EstimatedEndDateTimeUtc = jobRun.EstimatedEndDateTimeUtc,
-                Id = jobRun.Id,
-                //Job = jobRun.Job,
-                State = jobRun.State,
-                ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc,
-                PlannedStartDateTimeUtc = jobRun.PlannedStartDateTimeUtc,
-                InstanceParameters = jobRun.InstanceParameters,
-                JobParameters = jobRun.JobParameters,
-                Pid = jobRun.Pid,
-                Progress = jobRun.Progress,
-            };
         }
 
         public JobRun GetNextJobRunByTriggerId(long jobId, long triggerId, DateTime utcNow)
         {
-            var jobRun = this.GetScalarFromDb(con => con.SelectLazy<JobRun>().Where(i => i.Trigger.Id == triggerId).OrderBy(p => p.PlannedStartDateTimeUtc).FirstOrDefault());
-            return jobRun;
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                return connection.Select<JobRunInfo>(
+                        connection.From<Entities.JobRun>()
+                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
+                            .Where(p => p.State == JobRunStates.Scheduled)
+                            .OrderBy(o => o.PlannedStartDateTimeUtc))
+                    .Take(1)
+                    .Select(s => s.ToModel())
+                    .FirstOrDefault();
+            }
         }
 
         public PagedResult<JobRun> GetJobRuns(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null,
@@ -109,20 +106,59 @@ namespace Jobbr.Storage.MsSql
         {
             AssertOnlyOneFilterIsActive(jobTypeFilter, jobUniqueNameFilter, query);
 
-            var items = GetFromDb(con =>
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                var jobRuns = con.SelectLazy<JobRun>();
-                jobRuns = QueryExtender.SortFilteredJobRuns(jobRuns, page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
+                SqlExpression<Entities.JobRun> sqlExpression = connection.From<Entities.JobRun>()
+                    .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                    .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id);
 
-                return jobRuns.AsList();
-            });
+                if (jobTypeFilter != null)
+                {
+                    sqlExpression = sqlExpression
+                        .And<Job>(p => p.Type == jobTypeFilter);
+                }
+                else if (jobUniqueNameFilter != null)
+                {
+                    sqlExpression = sqlExpression
+                        .And<Job>(p => p.UniqueName == jobUniqueNameFilter);
+                }
+                else if (query != null)
+                {
+                    sqlExpression = sqlExpression
+                        .And<Job>(p => p.UniqueName.Contains(query) || p.Type.Contains(query) || p.Title.Contains(query));
+                }
 
-            return CreatePagedResult(page, pageSize, items);
+                var rows = connection.Select<JobRunInfo>(sqlExpression)
+                    .Select(s => s.ToModel())
+                    .ToList();
+
+                var count = connection.Count(sqlExpression);
+
+                return new PagedResult<JobRun>
+                {
+                    Items = rows,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalItems = (int)count,
+                };
+
+            }
+            throw new NotImplementedException();
+
+            //var items = this.GetFromDb(con =>
+            //{
+            //    var jobRuns = con.SelectLazy<JobRun>();
+            //    jobRuns = QueryExtender.SortFilteredJobRuns(jobRuns, page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
+
+            //    return jobRuns.AsList();
+            //});
+
+            //return CreatePagedResult(page, pageSize, items);
         }
 
         public PagedResult<JobRun> GetJobRunsByJobId(int jobId, int page = 1, int pageSize = 50, params string[] sort)
         {
-            var jobRuns = GetFromDb(con =>
+            var jobRuns = this.GetFromDb(con =>
             {
                 var jobs = con.SelectLazy<JobRun>().Where(s => s.Job.Id == jobId);
                 jobs = QueryExtender.SortJobRuns(jobs, sort).Skip(pageSize * (page - 1)).Take(pageSize);
@@ -136,20 +172,20 @@ namespace Jobbr.Storage.MsSql
         public PagedResult<JobRun> GetJobRunsByUserId(string userId, int page = 1, int pageSize = 50, string jobTypeFilter = null,
             string jobUniqueNameFilter = null, params string[] sort)
         {
-            return GetJobRunsByCriteria<Trigger>(crit => crit.UserId == userId,
+            return this.GetJobRunsByCriteria<Trigger>(crit => crit.UserId == userId,
                 s => s.JobId, page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 1, int pageSize = 50, params string[] sort)
         {
-            return GetJobRunsByCriteria<Trigger>(crit => crit.Id == triggerId,
+            return this.GetJobRunsByCriteria<Trigger>(crit => crit.Id == triggerId,
                 s => s.JobId, page, pageSize, null, null, sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1, int pageSize = 50,
             string jobTypeFilter = null, string jobUniqueNameFilter = null, params string[] sort)
         {
-            return GetJobRunsByCriteria<Trigger>(crit => crit.UserDisplayName == userDisplayName,
+            return this.GetJobRunsByCriteria<Trigger>(crit => crit.UserDisplayName == userDisplayName,
                 s => s.JobId, page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort);
         }
 
@@ -161,38 +197,42 @@ namespace Jobbr.Storage.MsSql
 
         public void AddJobRun(JobRun jobRun)
         {
-            this.Db(con => con.Insert(jobRun));
+            var entity = jobRun.ToEntity();
+
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                jobRun.Id = connection.Insert(entity, true);
+            }
         }
 
-        public List<JobRun> GetJobRuns(int page = 0, int pageSize = 50)
+        public List<JobRun> GetJobRuns(int page = 1, int pageSize = 50)
         {
-            return this.GetFromDb(con => con.SelectLazy<JobRun>().Skip(page * pageSize).Take(pageSize));
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                return connection.Select<JobRunInfo>(
+                        connection.From<Entities.JobRun>()
+                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Skip((page - 1) * pageSize)
+                            .Take(pageSize))
+                    .Select(s => s.ToModel())
+                    .ToList();
+            }
         }
 
         public void UpdateProgress(long jobRunId, double? progress)
         {
-            this.Db(con => con.Update<JobRun>(new { Progress = progress }, p => p.Id == jobRunId));
+            this.Db(con => con.Update<Entities.JobRun>(new { Progress = progress }, p => p.Id == jobRunId));
         }
 
         public void Update(JobRun jobRun)
         {
-            var fromDb = this.GetJobRunById(jobRun.Id);
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                var entity = jobRun.ToEntity();
 
-            Db(con => con.Update(
-                new
-                {
-                    jobRun.Id,
-                    jobRun.JobParameters,
-                    jobRun.InstanceParameters,
-                    jobRun.PlannedStartDateTimeUtc,
-                    jobRun.Progress,
-                    jobRun.Pid,
-                    ActualStartDateTimeUtc = jobRun.ActualStartDateTimeUtc ?? fromDb.ActualStartDateTimeUtc,
-                    EstimatedEndDateTimeUtc = jobRun.EstimatedEndDateTimeUtc ?? fromDb.EstimatedEndDateTimeUtc,
-                    ActualEndDateTimeUtc = jobRun.ActualEndDateTimeUtc ?? fromDb.ActualEndDateTimeUtc,
-                    State = jobRun.State.ToString()
-                }, job => job.Id == jobRun.Id
-            ));
+                connection.Update(entity);
+            }
         }
 
         public PagedResult<Job> GetJobs(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null,
@@ -200,7 +240,7 @@ namespace Jobbr.Storage.MsSql
         {
             AssertOnlyOneFilterIsActive(jobTypeFilter, jobUniqueNameFilter, query);
 
-            var items = GetFromDb(con =>
+            var items = this.GetFromDb(con =>
             {
                 var jobs = con.SelectLazy<Job>();
                 jobs = QueryExtender.SortFilteredJobs(jobs, page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
@@ -213,171 +253,182 @@ namespace Jobbr.Storage.MsSql
 
         public Job GetJobById(long id)
         {
-            var entity = GetScalarFromDb(con => con.SingleById<Entities.Job>(id));
-
-            return entity.ToModel();
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                return connection.SingleById<Entities.Job>(id).ToModel();
+            }
         }
 
         public Job GetJobByUniqueName(string identifier)
         {
-            return GetScalarFromDb(con => con.Single<Job>(new {UniqueName = identifier}));
+            return this.GetScalarFromDb(con => con.Single<Entities.Job>(new { UniqueName = identifier })).ToModel();
         }
 
         public JobRun GetJobRunById(long id)
         {
-            return GetScalarFromDb(con => con.SingleById<JobRun>(id));
-        }
-
-        public List<JobRun> GetJobRunsByUserId(string userId, int page = 0, int pageSize = 50)
-        {
-            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserId = @Id ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                return connection.Query<JobRun>(sql, new { Id = userId }).ToList();
+                return connection.Select<JobRunInfo>(
+                        connection.From<Entities.JobRun>()
+                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Where(p => p.Id == id))
+                    .Select(s => s.ToModel()).FirstOrDefault();
             }
-
-            ////return GetFromDb(con => con.SelectLazy<JobRun>().Join()
         }
 
-        public List<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 0, int pageSize = 50)
+        public List<JobRun> GetJobRunsByUserId(string userId, int page = 1, int pageSize = 50)
         {
-            var sql = $"SELECT jr.* FROM {this._configuration.Schema}.JobRuns AS jr LEFT JOIN {this._configuration.Schema}.Triggers AS tr ON tr.Id = jr.TriggerId WHERE tr.UserDisplayName = @UserDisplayName ORDER BY jr.PlannedStartDateTimeUtc ASC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                return connection.Query<JobRun>(sql, new { UserDisplayName = userDisplayName }).ToList();
+                var rows = connection.Select<JobRunInfo>(
+                    connection.From<Entities.JobRun>()
+                        .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                        .And<Entities.Trigger>(p => p.UserId == userId)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize));
+
+                return rows.Select(s => s.ToModel()).ToList();
+            }
+        }
+
+        public List<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1, int pageSize = 50)
+        {
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                var rows = connection.Select<JobRunInfo>(
+                    connection.From<Entities.JobRun>()
+                        .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                        .And<Entities.Trigger>(p => p.UserDisplayName == userDisplayName)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize));
+
+                return rows.Select(s => s.ToModel()).ToList();
             }
         }
 
         public void Update(Job job)
         {
-            var sql = $@"UPDATE {this._configuration.Schema}.{"Jobs"} SET
-                                        [UniqueName] = @UniqueName,
-                                        [Title] = @Title,
-                                        [Type] = @Type,
-                                        [Parameters] = @Parameters,
-                                        [UpdatedDateTimeUtc] = @UtcNow
-                                    WHERE [Id] = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                connection.Execute(
-                    sql,
-                    new
-                    {
-                        job.Id,
-                        job.UniqueName,
-                        job.Title,
-                        job.Type,
-                        job.Parameters,
-                        DateTime.UtcNow
-                    });
+                var entity = job.ToEntity();
+                entity.UpdatedDateTimeUtc = DateTime.UtcNow;
+
+                connection.Update<Entities.Job>(entity);
             }
         }
 
         public void DeleteTrigger(long jobId, long triggerId)
         {
-            Db(con => con.DeleteById<Trigger>(triggerId));
+            this.Db(con => con.DeleteById<Trigger>(triggerId));
         }
 
         public void Update(long jobId, InstantTrigger trigger)
         {
-            var sql = $@"UPDATE {this._configuration.Schema}.[Triggers]
-                  SET [IsActive] = @IsActive
-                     ,[UserId] = @UserId
-                     ,[UserDisplayName] = @UserDisplayName
-                     ,[Parameters] = @Parameters
-                     ,[Comment] = @Comment
-                     ,[DelayedMinutes] = @DelayedMinutes
-                 WHERE Id = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                connection.Execute(sql, trigger);
+                var entity = trigger.ToEntity();
+
+                connection.Update(entity);
             }
         }
 
         public void Update(long jobId, ScheduledTrigger trigger)
         {
-            var sql = $@"UPDATE {this._configuration.Schema}.[Triggers]
-                  SET [IsActive] = @IsActive
-                     ,[UserId] = @UserId
-                     ,[UserDisplayName] = @UserDisplayName
-                     ,[Parameters] = @Parameters
-                     ,[Comment] = @Comment
-                     ,[StartDateTimeUtc] = @StartDateTimeUtc
-                 WHERE Id = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                connection.Execute(sql, trigger);
+                var entity = trigger.ToEntity();
+
+                connection.Update(entity);
             }
         }
 
         public void Update(long jobId, RecurringTrigger trigger)
         {
-            var sql = $@"UPDATE {this._configuration.Schema}.[Triggers]
-                  SET [IsActive] = @IsActive
-                     ,[UserId] = @UserId
-                     ,[UserDisplayName] = @UserDisplayName
-                     ,[Parameters] = @Parameters
-                     ,[Comment] = @Comment
-                     ,[StartDateTimeUtc] = @StartDateTimeUtc
-                     ,[EndDateTimeUtc] = @EndDateTimeUtc
-                     ,[Definition] = @Definition
-                     ,[NoParallelExecution] = @NoParallelExecution
-                 WHERE Id = @Id";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                connection.Execute(sql, trigger);
+                var entity = trigger.ToEntity();
+
+                connection.Update(entity);
             }
         }
 
-        public List<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 0, int pageSize = 50)
+        public List<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 1, int pageSize = 50)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [TriggerId] = @TriggerId ORDER BY PlannedStartDateTimeUtc DESC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                return connection.Query<JobRun>(sql, new { TriggerId = triggerId }).ToList();
+                return connection.Select<JobRunInfo>(
+                    connection.From<Entities.JobRun>()
+                        .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                        .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                        .And<Entities.Job>(p => p.Id == jobId)
+                        .And<Entities.Trigger>(p => p.Id == triggerId)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize))
+                        .Select(s => s.ToModel())
+                        .ToList();
+
+
+                //return connection.SelectLazy<Entities.JobRun>()
+                //                 .Skip((page - 1) * pageSize)
+                //                 .Take(pageSize)
+                //                 .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
+                //                 .ToList()
+                //                 .Select(s => s.ToModel())
+                //                 .ToList();
             }
         }
 
-        public List<JobRun> GetJobRunsByState(JobRunStates state, int page = 0, int pageSize = 50)
+        public List<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50)
         {
-            var sql = $"SELECT * FROM {this._configuration.Schema}.JobRuns WHERE [State] = @State ORDER BY PlannedStartDateTimeUtc ASC OFFSET {page * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                return connection.Query<JobRun>(sql, new { State = state.ToString() }).ToList();
+                return connection.Select<JobRunInfo>(
+                        connection.From<Entities.JobRun>()
+                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Where(p => p.State == state)
+                            .Skip((page - 1) * pageSize)
+                            .Take(pageSize))
+                    .Select(s => s.ToModel())
+                    .ToList();
+
+                //return connection.SelectLazy<Entities.JobRun>()
+                //                 .Skip((page - 1) * pageSize)
+                //                 .Take(pageSize)
+                //                 .Where(p => p.State == state)
+                //                 .ToList()
+                //                 .Select(s => s.ToModel())
+                //                 .ToList();
             }
         }
 
         public void AddTrigger(long jobId, InstantTrigger trigger)
         {
             trigger.JobId = jobId;
-            this.InsertTrigger(trigger, TriggerType.Instant, DelayedMinutes: trigger.DelayedMinutes);
+
+            this.InsertTrigger(trigger);
         }
 
         public void AddTrigger(long jobId, ScheduledTrigger trigger)
         {
             trigger.JobId = jobId;
-            this.InsertTrigger(trigger, TriggerType.Scheduled, startDateTimeUtc: trigger.StartDateTimeUtc, endDateTimeUtc: trigger.StartDateTimeUtc);
+
+            this.InsertTrigger(trigger);
         }
 
         public void AddTrigger(long jobId, RecurringTrigger trigger)
         {
             trigger.JobId = jobId;
-            this.InsertTrigger(trigger, TriggerType.Recurring, trigger.Definition, noParallelExecution: trigger.NoParallelExecution);
+
+            this.InsertTrigger(trigger);
         }
 
         public PagedResult<JobTriggerBase> GetActiveTriggers(int page = 1, int pageSize = 50,
             string jobTypeFilter = null,
             string jobUniqueNameFilter = null, string query = null, params string[] sort)
         {
-            var activeTrigger = GetFromDb(con => con.Select<Trigger>().Where(t => t.IsActive));
+            var activeTrigger = this.GetFromDb(con => con.Select<Trigger>().Where(t => t.IsActive));
             var trigger = activeTrigger.Select(JobTriggerTriggerFactory.CreateTriggerFromDto);
 
             // TODO: JobTypeFilter, JobUniqueNameFilter, Query, Sort implement
@@ -387,41 +438,44 @@ namespace Jobbr.Storage.MsSql
 
         public void DisableTrigger(long jobId, long triggerId)
         {
-            var sql = $"UPDATE {this._configuration.Schema}.Triggers SET [IsActive] = @IsActive WHERE [Id] = @TriggerId";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                connection.Execute(sql, new { TriggerId = triggerId, IsActive = false });
+                connection.Update<Entities.Trigger>(new { IsActive = false }, p => p.Id == triggerId);
             }
         }
 
         public void EnableTrigger(long jobId, long triggerId)
         {
-            var sql = $"UPDATE {this._configuration.Schema}.Triggers SET [IsActive] = @IsActive WHERE [Id] = @TriggerId";
-
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
-                connection.Execute(sql, new { TriggerId = triggerId, IsActive = true });
+                connection.Update<Entities.Trigger>(new { IsActive = true }, p => p.Id == triggerId);
             }
         }
 
         public List<JobTriggerBase> GetTriggersByJobId(long jobId)
         {
-            return GetFromDb(con => con.Select<Trigger>().Where(t => t.JobId == jobId))
-                .Select(JobTriggerTriggerFactory.CreateTriggerFromDto)
-                .ToList();
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                return connection.Select<Entities.Trigger>(p => p.JobId == jobId)
+                    .ToList()
+                    .Select(s => s.ToModel())
+                    .ToList();
+            }
         }
 
         public JobTriggerBase GetTriggerById(long jobId, long triggerId)
         {
-            var trigger = GetScalarFromDb(c => c.SingleById<Trigger>(jobId));
-
-            return JobTriggerTriggerFactory.CreateTriggerFromDto(trigger);
+            using (var connection = this.ormLiteConnectionFactory.Open())
+            {
+                return connection.Select<Entities.Trigger>(p => p.JobId == jobId && p.Id == triggerId)
+                    .First()
+                    .ToModel();
+            }
         }
 
         public PagedResult<JobTriggerBase> GetTriggersByJobId(long jobId, int page = 1, int pageSize = 50)
         {
-            var triggers = GetFromDb(con => con.Select<Trigger>().Where(t => t.JobId == jobId))
+            var triggers = this.GetFromDb(con => con.Select<Trigger>().Where(t => t.JobId == jobId))
                 .Skip(pageSize * (page - 1))
                 .Take(pageSize)
                 .Select(JobTriggerTriggerFactory.CreateTriggerFromDto)
@@ -432,21 +486,21 @@ namespace Jobbr.Storage.MsSql
 
         public List<JobTriggerBase> GetActiveTriggers()
         {
-            return GetFromDb(con => con.Select<Trigger>().Where(t => t.IsActive))
-                .Select(JobTriggerTriggerFactory.CreateTriggerFromDto)
+            return this.GetFromDb(con => con.Select<Entities.Trigger>().Where(t => t.IsActive))
+                .Select(s => s.ToModel())
                 .ToList();
         }
 
         private PagedResult<JobRun> GetJobRunsByCriteria<TCriterion>(
             Func<TCriterion, bool> filter,
-            Func<TCriterion, long> idSelector, 
-            int page = 1, 
+            Func<TCriterion, long> idSelector,
+            int page = 1,
             int pageSize = 50,
-            string jobTypeFilter = null, 
-            string jobUniqueNameFilter = null, 
+            string jobTypeFilter = null,
+            string jobUniqueNameFilter = null,
             params string[] sort)
         {
-            var jobRuns = GetFromDb(con =>
+            var jobRuns = this.GetFromDb(con =>
             {
                 // First get the corresponding JobRun from the TriggerId, which is defined in the trigger
                 var triggers = con.SelectLazy<TCriterion>().Where(filter);
@@ -480,7 +534,52 @@ namespace Jobbr.Storage.MsSql
 
         public long GetJobsCount()
         {
-            return GetScalarFromDb(con => con.Count<Job>());
+            return this.GetScalarFromDb(con => con.Count<Entities.Job>());
+        }
+
+        private void InsertTrigger(InstantTrigger trigger)
+        {
+            var entity = trigger.ToEntity();
+
+            if (entity.CreatedDateTimeUtc == default(DateTime))
+            {
+                entity.CreatedDateTimeUtc = DateTime.UtcNow;
+            }
+
+            using (var connection = this.ormLiteConnectionFactory.OpenDbConnection())
+            {
+                trigger.Id = connection.Insert(entity, true);
+            }
+        }
+
+        private void InsertTrigger(ScheduledTrigger trigger)
+        {
+            var entity = trigger.ToEntity();
+
+            if (entity.CreatedDateTimeUtc == default(DateTime))
+            {
+                entity.CreatedDateTimeUtc = DateTime.UtcNow;
+            }
+
+            using (var connection = this.ormLiteConnectionFactory.OpenDbConnection())
+            {
+                trigger.Id = connection.Insert(entity, true);
+            }
+        }
+
+        private void InsertTrigger(RecurringTrigger trigger)
+        {
+            var entity = trigger.ToEntity();
+
+            if (entity.CreatedDateTimeUtc == default(DateTime))
+            {
+                entity.CreatedDateTimeUtc = DateTime.UtcNow;
+            }
+
+            using (var connection = this.ormLiteConnectionFactory.OpenDbConnection())
+            {
+                trigger.Id = connection.Insert(entity, true);
+            }
         }
 
         private void InsertTrigger(JobTriggerBase trigger, string type, string definition = "", DateTime? startDateTimeUtc = null, DateTime? endDateTimeUtc = null, int DelayedMinutes = 0, bool noParallelExecution = false)
@@ -488,11 +587,11 @@ namespace Jobbr.Storage.MsSql
             var dateTimeUtcNow = DateTime.UtcNow;
 
             var sql =
-                $@"INSERT INTO {this._configuration.Schema}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedMinutes],[IsActive],[UserId],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
+                $@"INSERT INTO {this.configuration.Schema}.Triggers([JobId],[TriggerType],[Definition],[StartDateTimeUtc],[EndDateTimeUtc],[DelayedMinutes],[IsActive],[UserId],[UserDisplayName],[Parameters],[Comment],[CreatedDateTimeUtc],[NoParallelExecution])
                   VALUES (@JobId,@TriggerType,@Definition,@StartDateTimeUtc,@EndDateTimeUtc,@DelayedMinutes,@IsActive,@UserId,@UserDisplayName,@Parameters,@Comment,@UtcNow,@NoParallelExecution)
                   SELECT CAST(SCOPE_IDENTITY() as int)";
 
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = new SqlConnection(this.configuration.ConnectionString))
             {
                 var triggerObject =
                     new
@@ -520,7 +619,7 @@ namespace Jobbr.Storage.MsSql
 
         private List<JobTriggerBase> ExecuteSelectTriggerQuery(string sql, object param)
         {
-            using (var connection = new SqlConnection(this._configuration.ConnectionString))
+            using (var connection = new SqlConnection(this.configuration.ConnectionString))
             {
                 using (var multi = connection.QueryMultiple(sql, param))
                 {
@@ -567,7 +666,7 @@ namespace Jobbr.Storage.MsSql
 
         private List<T> GetFromDb<T>(Func<IDbConnection, IEnumerable<T>> dbWork)
         {
-            using (var connection = _ormLiteConnectionFactory.Open())
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
                 var jobs = dbWork(connection);
 
@@ -577,7 +676,7 @@ namespace Jobbr.Storage.MsSql
 
         private T GetScalarFromDb<T>(Func<IDbConnection, T> dbWork)
         {
-            using (var connection = _ormLiteConnectionFactory.Open())
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
                 var scalarFromDb = dbWork(connection);
 
@@ -587,7 +686,7 @@ namespace Jobbr.Storage.MsSql
 
         private void Db(Action<IDbConnection> dbWork)
         {
-            using (var connection = _ormLiteConnectionFactory.Open())
+            using (var connection = this.ormLiteConnectionFactory.Open())
             {
                 dbWork(connection);
             }

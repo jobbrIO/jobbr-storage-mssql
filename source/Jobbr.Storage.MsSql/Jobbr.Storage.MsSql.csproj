@@ -82,6 +82,8 @@
     <Compile Include="Entities\TriggerType.cs" />
     <Compile Include="JobTriggerTriggerFactory.cs" />
     <Compile Include="Mapping\JobMapping.cs" />
+    <Compile Include="Mapping\JobRunMapping.cs" />
+    <Compile Include="Mapping\TriggerMapping.cs" />
     <Compile Include="MsSqlStorageProvider.cs" />
     <Compile Include="JobbrBuilderExtensions.cs" />
     <Compile Include="JobbrMsSqlConfiguration.cs" />

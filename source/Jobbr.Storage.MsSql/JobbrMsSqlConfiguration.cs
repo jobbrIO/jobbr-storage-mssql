@@ -10,6 +10,8 @@ namespace Jobbr.Storage.MsSql
         [Obsolete("Schema property is not used anymore. Give jobbr its own database - no schemas needed")]
         public string Schema { get; set; }
 
+        public bool CreateTablesIfNotExists { get; set; }
+
         public IOrmLiteDialectProvider DialectProvider { get; set; }
     }
 }

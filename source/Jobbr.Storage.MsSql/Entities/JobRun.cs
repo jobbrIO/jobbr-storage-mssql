@@ -17,7 +17,9 @@ namespace Jobbr.Storage.MsSql.Entities
         public DateTime? ActualStartDateTimeUtc { get; set; }
         public DateTime? ActualEndDateTimeUtc { get; set; }
         public DateTime? EstimatedEndDateTimeUtc { get; set; }
+        [StringLength(int.MaxValue)]
         public string JobParameters { get; set; }
+        [StringLength(int.MaxValue)]
         public string InstanceParameters { get; set; }
         public int? Pid { get; set; }
     }

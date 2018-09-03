@@ -15,39 +15,22 @@ namespace Jobbr.Storage.MsSql.Tests
     [TestClass]
     public class MsSqlStorageProviderTests
     {
-        private SqlConnection _sqlConnection;
         private MsSqlStorageProvider storageProvider;
-        private LocalDb _localDb;
 
-        const string ConnectionString = "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
+        private const string ConnectionString = "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
 
         [TestInitialize]
         public void SetupDatabaseInstance()
         {
-            OrmLiteConfig.BeforeExecFilter = dbCmd => File.AppendAllText("c:/temp/sql.txt", Environment.NewLine + dbCmd.GetDebugString() + Environment.NewLine);
-
-            //this._localDb = new LocalDb("local");
-            //this._sqlConnection = this._localDb.CreateSqlConnection();
-            //this._sqlConnection.Open();
-
-            //var sqlStatements = SqlHelper.SplitSqlStatements(File.ReadAllText("CreateSchemaAndTables.sql")).ToList();
-
-            //foreach (var statement in sqlStatements)
-            //{
-            //    using (var command = this._sqlConnection.CreateCommand())
-            //    {
-            //        command.CommandText = statement;
-            //        command.ExecuteNonQuery();
-            //    }
-            //}
+            //OrmLiteConfig.BeforeExecFilter = dbCmd => File.AppendAllText("c:/temp/sql.txt", Environment.NewLine + dbCmd.GetDebugString() + Environment.NewLine);
 
             DropTablesIfExists();
 
             this.storageProvider = new MsSqlStorageProvider(new JobbrMsSqlConfiguration
             {
                 ConnectionString = ConnectionString,
-                Schema = "Jobbr",
-                DialectProvider = new SqlServer2017OrmLiteDialectProvider()
+                DialectProvider = new SqlServer2017OrmLiteDialectProvider(),
+                CreateTablesIfNotExists = true
             });
         }
 
@@ -71,12 +54,8 @@ namespace Jobbr.Storage.MsSql.Tests
             {
                 connection.DropTable<Entities.Job>();
             }
-        }
 
-        [TestCleanup]
-        public void TestCleanup()
-        {
-            /*  this._sqlConnection.Close();*/
+            connection.Close();
         }
 
         [TestMethod]
@@ -97,7 +76,7 @@ namespace Jobbr.Storage.MsSql.Tests
             storageProvider.AddJob(job1);
             storageProvider.AddJob(job2);
 
-            Assert.AreNotEqual(job1.Id, job2.Id);
+            job1.Id.ShouldNotBe(job2.Id);
         }
 
         [TestMethod]
@@ -113,9 +92,9 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var job2 = storageProvider.GetJobById(job.Id);
 
-            Assert.AreEqual(job.Id, job2.Id);
-            Assert.AreEqual("testjob", job2.UniqueName);
-            Assert.AreEqual("Jobs.Test", job2.Type);
+            job.Id.ShouldBe(job2.Id);
+            job2.UniqueName.ShouldBe("testjob");
+            job2.Type.ShouldBe("Jobs.Test");
         }
 
         [TestMethod]
@@ -133,15 +112,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             storageProvider.AddJob(job1);
 
-            try
-            {
-                storageProvider.AddJob(job2);
-
-                Assert.Fail("SqlException should have been raised");
-            }
-            catch (SqlException)
-            {
-            }
+            Should.Throw<SqlException>(() => storageProvider.AddJob(job2), "SqlException should have been raised");
         }
 
         [TestMethod]
@@ -157,13 +128,13 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var job2 = this.storageProvider.GetJobByUniqueName(job.UniqueName);
 
-            Assert.AreEqual(job.Id, job2.Id);
-            Assert.AreEqual("testjob", job2.UniqueName);
-            Assert.AreEqual("Jobs.Test", job2.Type);
+            job.Id.ShouldBe(job2.Id);
+            job2.UniqueName.ShouldBe("testjob");
+            job2.Type.ShouldBe("Jobs.Test");
         }
 
         [TestMethod]
-        public void GivenTwoJobs_WhenQueryingPaged_ResultIsPaged()
+        public void Query_Jobs_Paged()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
             var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
@@ -175,8 +146,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobs = this.storageProvider.GetJobs(1, 1);
 
-            Assert.AreEqual(1, jobs.Count);
-            Assert.AreEqual(job1.Id, jobs[0].Id);
+            jobs.Items.Count.ShouldBe(1);
         }
 
         [TestMethod]
@@ -192,8 +162,11 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobs = this.storageProvider.GetJobs(2, 1);
 
-            Assert.AreEqual(1, jobs.Count);
-            Assert.AreEqual(job2.Id, jobs[0].Id);
+            Assert.AreEqual(1, jobs.Items.Count);
+            Assert.AreEqual(job2.Id, jobs.Items[0].Id);
+
+            jobs.Items.Count.ShouldBe(1);
+            jobs.Items[0].Id.ShouldBe(job2.Id);
         }
 
         [TestMethod]
@@ -215,7 +188,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var activeTriggers = this.storageProvider.GetActiveTriggers();
 
-            Assert.AreEqual(2, activeTriggers.Count);
+            activeTriggers.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -238,8 +211,8 @@ namespace Jobbr.Storage.MsSql.Tests
             var triggersOfJob1 = this.storageProvider.GetTriggersByJobId(job1.Id);
             var triggersOfJob2 = this.storageProvider.GetTriggersByJobId(job2.Id);
 
-            Assert.AreEqual(2, triggersOfJob1.Count);
-            Assert.AreEqual(1, triggersOfJob2.Count);
+            triggersOfJob1.Items.Count.ShouldBe(2);
+            triggersOfJob2.Items.Count.ShouldBe(1);
         }
 
         [TestMethod]
@@ -296,11 +269,11 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRuns(1, 1);
 
-            Assert.AreEqual(1, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(1);
 
             jobRuns = this.storageProvider.GetJobRuns(1, 2);
 
-            Assert.AreEqual(2, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -324,7 +297,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByState(JobRunStates.Failed);
 
-            Assert.AreEqual(1, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(1);
         }
 
         [TestMethod]
@@ -348,11 +321,11 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByState(JobRunStates.Completed, 1, 1);
 
-            Assert.AreEqual(1, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(1);
 
             jobRuns = this.storageProvider.GetJobRunsByState(JobRunStates.Completed, 1, 2);
 
-            Assert.AreEqual(2, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -376,7 +349,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id);
 
-            Assert.AreEqual(3, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(3);
         }
 
         [TestMethod]
@@ -400,7 +373,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id, 1, 2);
 
-            Assert.AreEqual(2, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -411,12 +384,14 @@ namespace Jobbr.Storage.MsSql.Tests
             this.storageProvider.AddJob(job1);
 
             var trigger1 = new InstantTrigger { IsActive = true, UserDisplayName = "chefkoch" };
+            var trigger2 = new InstantTrigger { IsActive = true, UserDisplayName = "foo" };
 
             this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job1.Id, trigger2);
 
             var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
             var jobRun2 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
-            var jobRun3 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
+            var jobRun3 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
 
             this.storageProvider.AddJobRun(jobRun1);
             this.storageProvider.AddJobRun(jobRun2);
@@ -424,7 +399,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByUserDisplayName("chefkoch");
 
-            Assert.AreEqual(3, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -448,7 +423,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByUserDisplayName("chefkoch", 1, 2);
 
-            Assert.AreEqual(2, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -472,7 +447,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByUserId("ozu");
 
-            Assert.AreEqual(3, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(3);
         }
 
         [TestMethod]
@@ -496,7 +471,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var jobRuns = this.storageProvider.GetJobRunsByUserId("ozu", 1, 2);
 
-            Assert.AreEqual(2, jobRuns.Count);
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -582,7 +557,7 @@ namespace Jobbr.Storage.MsSql.Tests
             this.storageProvider.AddJobRun(jobRun3);
 
             var nextJobRun = this.storageProvider.GetNextJobRunByTriggerId(job1.Id, trigger1.Id, now.AddMinutes(1));
-            
+
             nextJobRun.Id.ShouldBe(jobRun3.Id);
         }
 
@@ -626,10 +601,10 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var job1Reloaded = this.storageProvider.GetJobById(job1.Id);
 
-            Assert.AreEqual("test-uniquename", job1Reloaded.UniqueName);
-            Assert.AreEqual("test-title", job1Reloaded.Title);
-            Assert.AreEqual("test-type", job1Reloaded.Type);
-            Assert.AreEqual("test-parameters", job1Reloaded.Parameters);
+            job1Reloaded.UniqueName.ShouldBe("test-uniquename");
+            job1Reloaded.Title.ShouldBe("test-title");
+            job1Reloaded.Type.ShouldBe("test-type");
+            job1Reloaded.Parameters.ShouldBe("test-parameters");
         }
 
         [TestMethod]
@@ -663,12 +638,12 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var job1Reloaded = this.storageProvider.GetJobRunById(job1.Id);
 
-            Assert.AreEqual("test-jobparameters", job1Reloaded.JobParameters);
-            Assert.AreEqual("test-instanceparameters", job1Reloaded.InstanceParameters);
-            Assert.AreEqual(newPlannedStartDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.PlannedStartDateTimeUtc.ToString(CultureInfo.InvariantCulture));
-            Assert.AreEqual(newActualStartDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.ActualStartDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
-            Assert.AreEqual(newEstimatedStartDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.EstimatedEndDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
-            Assert.AreEqual(newActualEndDate.ToString(CultureInfo.InvariantCulture), job1Reloaded.ActualEndDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+            job1Reloaded.JobParameters.ShouldBe("test-jobparameters");
+            job1Reloaded.InstanceParameters.ShouldBe("test-instanceparameters");
+            job1Reloaded.PlannedStartDateTimeUtc.ShouldBe(newPlannedStartDate, TimeSpan.FromSeconds(1));
+            job1Reloaded.ActualStartDateTimeUtc.GetValueOrDefault().ShouldBe(newActualStartDate, TimeSpan.FromSeconds(1));
+            job1Reloaded.EstimatedEndDateTimeUtc.GetValueOrDefault().ShouldBe(newEstimatedStartDate, TimeSpan.FromSeconds(1));
+            job1Reloaded.ActualEndDateTimeUtc.GetValueOrDefault().ShouldBe(newActualEndDate, TimeSpan.FromSeconds(1));
         }
 
         [TestMethod]
@@ -693,11 +668,11 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var trigger2Reloaded = (InstantTrigger)this.storageProvider.GetTriggerById(job1.Id, trigger2.Id);
 
-            Assert.AreEqual("bla", trigger2Reloaded.Comment);
-            Assert.IsTrue(trigger2Reloaded.IsActive);
-            Assert.AreEqual("test-parameters", trigger2Reloaded.Parameters);
-            Assert.AreEqual("ozu", trigger2Reloaded.UserId);
-            Assert.AreEqual(5, trigger2Reloaded.DelayedMinutes);
+            trigger2Reloaded.Comment.ShouldBe("bla");
+            trigger2Reloaded.IsActive.ShouldBeTrue();
+            trigger2Reloaded.Parameters.ShouldBe("test-parameters");
+            trigger2Reloaded.UserId.ShouldBe("ozu");
+            trigger2Reloaded.DelayedMinutes.ShouldBe(5);
         }
 
         [TestMethod]
@@ -725,11 +700,11 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var trigger2Reloaded = (ScheduledTrigger)this.storageProvider.GetTriggerById(job1.Id, trigger2.Id);
 
-            Assert.AreEqual("bla", trigger2Reloaded.Comment);
-            Assert.IsTrue(trigger2Reloaded.IsActive);
-            Assert.AreEqual("test-parameters", trigger2Reloaded.Parameters);
-            Assert.AreEqual("ozu", trigger2Reloaded.UserId);
-            Assert.AreEqual(startDateTime.ToString(CultureInfo.InvariantCulture), trigger2Reloaded.StartDateTimeUtc.ToString(CultureInfo.InvariantCulture));
+            trigger2Reloaded.Comment.ShouldBe("bla");
+            trigger2Reloaded.IsActive.ShouldBeTrue();
+            trigger2Reloaded.Parameters.ShouldBe("test-parameters");
+            trigger2Reloaded.UserId.ShouldBe("ozu");
+            trigger2Reloaded.StartDateTimeUtc.ShouldBe(startDateTime, TimeSpan.FromSeconds(1));
         }
 
         [TestMethod]
@@ -761,14 +736,14 @@ namespace Jobbr.Storage.MsSql.Tests
 
             var trigger2Reloaded = (RecurringTrigger)this.storageProvider.GetTriggerById(job1.Id, trigger2.Id);
 
-            Assert.AreEqual("bla", trigger2Reloaded.Comment);
-            Assert.IsTrue(trigger2Reloaded.IsActive);
-            Assert.AreEqual("test-parameters", trigger2Reloaded.Parameters);
-            Assert.AreEqual("ozu", trigger2Reloaded.UserId);
-            Assert.AreEqual(startDateTime.ToString(CultureInfo.InvariantCulture), trigger2Reloaded.StartDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
-            Assert.AreEqual(endDateTime.ToString(CultureInfo.InvariantCulture), trigger2Reloaded.EndDateTimeUtc.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
-            Assert.AreEqual("* * * * *", trigger2Reloaded.Definition);
-            Assert.IsTrue(trigger2Reloaded.NoParallelExecution);
+            trigger2Reloaded.Comment.ShouldBe("bla");
+            trigger2Reloaded.IsActive.ShouldBeTrue();
+            trigger2Reloaded.Parameters.ShouldBe("test-parameters");
+            trigger2Reloaded.UserId.ShouldBe("ozu");
+            trigger2Reloaded.StartDateTimeUtc.GetValueOrDefault().ShouldBe(startDateTime, TimeSpan.FromSeconds(1));
+            trigger2Reloaded.EndDateTimeUtc.GetValueOrDefault().ShouldBe(endDateTime, TimeSpan.FromSeconds(1));
+            trigger2Reloaded.Definition.ShouldBe("* * * * *");
+            trigger2Reloaded.NoParallelExecution.ShouldBeTrue();
         }
 
         [TestMethod]
@@ -776,16 +751,6 @@ namespace Jobbr.Storage.MsSql.Tests
         {
             Assert.IsTrue(this.storageProvider.IsAvailable());
         }
-
-        //[TestMethod]
-        //public void GivenNonRunningDatabase_WhenCheckingAvailability_IsAvailable()
-        //{
-        //    var cmd = this._sqlConnection.CreateCommand();
-        //    cmd.CommandText = $"DROP TABLE Jobbr.Jobs;";
-        //    cmd.ExecuteNonQuery();
-
-        //    Assert.IsFalse(this.storageProvider.IsAvailable());
-        //}
 
         [TestMethod]
         public void Get_Jobs_Count()

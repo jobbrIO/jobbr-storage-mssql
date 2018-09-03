@@ -98,11 +98,9 @@
   <ItemGroup>
     <Compile Include="MsSqlStorageProviderTests.cs" />
     <Compile Include="ExposeStorageProvider.cs" />
-    <Compile Include="LocalDb.cs" />
     <Compile Include="PackagingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerRegistrationTests.cs" />
-    <Compile Include="SqlHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

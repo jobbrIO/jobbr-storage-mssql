@@ -18,6 +18,6 @@
   <files>
     <file src="..\ilmerged\Jobbr.Storage.MsSql.dll" target="lib\net462"/>
     <file src="..\ilmerged\Jobbr.Storage.MsSql.pdb" target="lib\net462"/>
-    <file src="Jobbr.Storage.MsSql\CreateSchemaAndTables.sql" target=""/>
+    <file src="Jobbr.Storage.MsSql\CreateTables.sql" target=""/>
   </files>
 </package>

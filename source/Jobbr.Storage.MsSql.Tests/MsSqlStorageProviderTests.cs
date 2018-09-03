@@ -13,7 +13,7 @@ namespace Jobbr.Storage.MsSql.Tests
     {
         private MsSqlStorageProvider storageProvider;
 
-        private const string ConnectionString = "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("APPVEYOR") == "True" ? "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!" : "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
 
         [TestInitialize]
         public void SetupDatabaseInstance()

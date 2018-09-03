@@ -78,6 +78,7 @@
     <Compile Include="App_Packages\LibLog.3.1\LibLog.cs" />
     <Compile Include="Entities\Job.cs" />
     <Compile Include="Entities\JobRun.cs" />
+    <Compile Include="Entities\JobRunInfo.cs" />
     <Compile Include="Entities\Trigger.cs" />
     <Compile Include="Entities\TriggerType.cs" />
     <Compile Include="Mapping\JobMapping.cs" />

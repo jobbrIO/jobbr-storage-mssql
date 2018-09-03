@@ -12,7 +12,7 @@
     <copyright>Copyright 2017</copyright>
     <dependencies>
       <dependency id="Jobbr.ComponentModel.Registration" version="[1.0.0]"/>
-      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.0.0]"/>
+      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.1.0]"/>
     </dependencies>
   </metadata>
   <files>

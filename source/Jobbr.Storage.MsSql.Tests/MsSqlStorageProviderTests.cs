@@ -69,8 +69,8 @@ namespace Jobbr.Storage.MsSql.Tests
                 Type = "Jobs.Test2"
             };
 
-            storageProvider.AddJob(job1);
-            storageProvider.AddJob(job2);
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
 
             job1.Id.ShouldNotBe(job2.Id);
         }
@@ -84,9 +84,9 @@ namespace Jobbr.Storage.MsSql.Tests
                 Type = "Jobs.Test"
             };
 
-            storageProvider.AddJob(job);
+            this.storageProvider.AddJob(job);
 
-            var job2 = storageProvider.GetJobById(job.Id);
+            var job2 = this.storageProvider.GetJobById(job.Id);
 
             job.Id.ShouldBe(job2.Id);
             job2.UniqueName.ShouldBe("testjob");
@@ -106,9 +106,9 @@ namespace Jobbr.Storage.MsSql.Tests
                 UniqueName = "i-am-unique",
             };
 
-            storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job1);
 
-            Should.Throw<SqlException>(() => storageProvider.AddJob(job2), "SqlException should have been raised");
+            Should.Throw<SqlException>(() => this.storageProvider.AddJob(job2), "SqlException should have been raised");
         }
 
         [TestMethod]

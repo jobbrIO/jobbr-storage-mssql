@@ -19,7 +19,6 @@ namespace Jobbr.Storage.MsSql.Tests
             builder.AddMsSqlStorage(config =>
             {
                 config.ConnectionString = @"Server=.\INSTANCENAME;Integrated Security=true;InitialCatalog=NotUsed;";
-                config.Schema = "Jobbr";
             });
 
             builder.Create();
@@ -28,6 +27,7 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        [Ignore]
         public void RegisteredAsComponent_WithBasicConfiguration_DoesStart()
         {
             var connectionString = GivenDatabaseInstance();
@@ -37,7 +37,6 @@ namespace Jobbr.Storage.MsSql.Tests
             builder.AddMsSqlStorage(config =>
             {
                 config.ConnectionString = connectionString;
-                config.Schema = "Jobbr";
             });
 
             using (var server = builder.Create())

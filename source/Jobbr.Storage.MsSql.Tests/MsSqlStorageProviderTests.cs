@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Configuration;
 using System.Data.SqlClient;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ServiceStack.OrmLite;
@@ -22,7 +18,7 @@ namespace Jobbr.Storage.MsSql.Tests
         [TestInitialize]
         public void SetupDatabaseInstance()
         {
-            //OrmLiteConfig.BeforeExecFilter = dbCmd => File.AppendAllText("c:/temp/sql.txt", Environment.NewLine + dbCmd.GetDebugString() + Environment.NewLine);
+            OrmLiteConfig.BeforeExecFilter = dbCmd => Console.WriteLine(Environment.NewLine + dbCmd.GetDebugString() + Environment.NewLine);
 
             DropTablesIfExists();
 
@@ -131,6 +127,23 @@ namespace Jobbr.Storage.MsSql.Tests
             job.Id.ShouldBe(job2.Id);
             job2.UniqueName.ShouldBe("testjob");
             job2.Type.ShouldBe("Jobs.Test");
+        }
+
+        [TestMethod]
+        public void Query_Jobs_Ordered()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+            var job3 = new Job { UniqueName = "testjob3", Type = "Jobs.Test3" };
+
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
+            this.storageProvider.AddJob(job3);
+
+            var jobs = this.storageProvider.GetJobs(sort: new []{ "-Type" });
+
+            jobs.Items.Count.ShouldBe(3);
+            jobs.Items[0].Id.ShouldBe(job3.Id);
         }
 
         [TestMethod]
@@ -747,7 +760,7 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
-        public void GivenRunningDatabase_WhenCheckingAvailability_IsAvailable()
+        public void Check_Availability()
         {
             Assert.IsTrue(this.storageProvider.IsAvailable());
         }

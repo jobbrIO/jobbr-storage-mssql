@@ -12,17 +12,9 @@ namespace Jobbr.Storage.MsSql
 
         public bool Validate(object configuration)
         {
-            var config = configuration as JobbrMsSqlConfiguration;
-
-            if (config == null)
+            if (!(configuration is JobbrMsSqlConfiguration config))
             {
                 return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(config.Schema))
-            {
-                config.Schema = "Jobbr";
-                Logger.Debug($"No schema provided. Using default schema '${config.Schema}'");
             }
 
             if (string.IsNullOrWhiteSpace(config.ConnectionString))

@@ -112,6 +112,8 @@ namespace Jobbr.Storage.MsSql
 
                 var count = connection.Count(sqlExpression);
 
+                sqlExpression.Ordered(sort);
+
                 sqlExpression.Skip((page - 1) * pageSize).Take(pageSize);
 
                 var rows = connection.Select(sqlExpression)
@@ -233,18 +235,12 @@ namespace Jobbr.Storage.MsSql
             return this.GetJobRuns(sql => sql.Where(p => p.TriggerId == triggerId && p.JobId == jobId), page, pageSize, sort: sort);
         }
 
-        public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, 
-            int page = 1,
-            int pageSize = 50,
-            string jobTypeFilter = null, 
-            string jobUniqueNameFilter = null,
-            params string[] sort)
+        public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1,int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, params string[] sort)
         {
             return this.GetJobRuns(p => p.And<Entities.Trigger>(t => t.UserDisplayName == userDisplayName), page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort: sort);
         }
 
-        public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null,
-            string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
         {
             return this.GetJobRuns(sql => sql.Where(p => p.State == state), page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
         }
@@ -273,6 +269,8 @@ namespace Jobbr.Storage.MsSql
                 sql?.Invoke(sqlExpression);
 
                 var count = connection.Count(sqlExpression);
+
+                sqlExpression.Ordered(sort);
 
                 sqlExpression.Skip((page - 1) * pageSize).Take(pageSize);
 
@@ -319,7 +317,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                connection.DeleteById<Trigger>(triggerId);
+                connection.DeleteById<Entities.Trigger>(triggerId);
             }
         }
 

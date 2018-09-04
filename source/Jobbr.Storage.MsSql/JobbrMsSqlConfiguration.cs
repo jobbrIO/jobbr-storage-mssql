@@ -1,5 +1,6 @@
 ﻿using System;
 using ServiceStack.OrmLite;
+using ServiceStack.OrmLite.SqlServer;
 
 namespace Jobbr.Storage.MsSql
 {
@@ -12,6 +13,6 @@ namespace Jobbr.Storage.MsSql
 
         public bool CreateTablesIfNotExists { get; set; }
 
-        public IOrmLiteDialectProvider DialectProvider { get; set; }
+        public IOrmLiteDialectProvider DialectProvider { get; set; } = new SqlServer2017OrmLiteDialectProvider();
     }
 }

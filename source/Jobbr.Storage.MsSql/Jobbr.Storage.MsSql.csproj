@@ -67,12 +67,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="TheOne.OrmLite, Version=0.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\TheOne.OrmLite.0.0.2\lib\net46\TheOne.OrmLite.dll</HintPath>
-    </Reference>
-    <Reference Include="TheOne.OrmLite.SqlServer, Version=0.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\TheOne.OrmLite.SqlServer.0.0.2\lib\net46\TheOne.OrmLite.SqlServer.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Packages\LibLog.3.1\LibLog.cs" />

@@ -13,6 +13,11 @@
     <dependencies>
       <dependency id="Jobbr.ComponentModel.Registration" version="[1.0.0]"/>
       <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.1.0]"/>
+      <dependency id="ServiceStack.Common" version="[5,6)"/>
+      <dependency id="ServiceStack.Interfaces" version="[5,6)"/>
+      <dependency id="ServiceStack.OrmLite" version="[5,6)"/>
+      <dependency id="ServiceStack.OrmLite.SqlServer" version="[5,6)"/>
+      <dependency id="ServiceStack.Text" version="[5,6)"/>
     </dependencies>
   </metadata>
   <files>

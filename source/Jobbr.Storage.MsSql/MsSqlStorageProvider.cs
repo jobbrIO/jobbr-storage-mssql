@@ -155,7 +155,7 @@ namespace Jobbr.Storage.MsSql
                 return connection.Select<JobRunInfo>(
                         connection.From<Entities.JobRun>()
                             .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
-                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.JobId == j.Id)
                             .Where(p => p.Id == id))
                     .Select(s => s.ToModel()).FirstOrDefault();
             }

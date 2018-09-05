@@ -39,6 +39,7 @@ namespace Jobbr.Storage.MsSql
         public void AddJob(Job job)
         {
             var entity = job.ToEntity();
+            entity.CreatedDateTimeUtc = DateTime.UtcNow;
 
             using (var session = this.connectionFactory.Open())
             {

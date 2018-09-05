@@ -76,6 +76,12 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        public void Get_Non_Existing_Job_By_Unique_Id()
+        {
+            this.storageProvider.GetJobByUniqueName("i-dont-exist").ShouldBeNull();
+        }
+
+        [TestMethod]
         public void Get_Job_By_Id()
         {
             var job = new Job

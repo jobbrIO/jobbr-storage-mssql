@@ -257,15 +257,15 @@ namespace Jobbr.Storage.MsSql
 
                 if (jobTypeFilter != null)
                 {
-                    sqlExpression.And<Job>(p => p.Type == jobTypeFilter);
+                    sqlExpression.And<Entities.Job>(p => p.Type == jobTypeFilter);
                 }
                 else if (jobUniqueNameFilter != null)
                 {
-                    sqlExpression.And<Job>(p => p.UniqueName == jobUniqueNameFilter);
+                    sqlExpression.And<Entities.Job>(p => p.UniqueName == jobUniqueNameFilter);
                 }
                 else if (query != null)
                 {
-                    sqlExpression.And<Job>(p => p.UniqueName.Contains(query) || p.Type.Contains(query) || p.Title.Contains(query));
+                    sqlExpression.And<Entities.Job>(p => p.UniqueName.Contains(query) || p.Type.Contains(query) || p.Title.Contains(query));
                 }
 
                 sql?.Invoke(sqlExpression);

@@ -136,6 +136,39 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        public void Query_Job_By_JobTypeFilter()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+            var job3 = new Job { UniqueName = "testjob3", Type = "Jobs.Test3" };
+
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
+            this.storageProvider.AddJob(job3);
+
+            var jobs = this.storageProvider.GetJobs(jobTypeFilter: "Jobs.Test2");
+
+            jobs.Items.Count.ShouldBe(1);
+            jobs.Items[0].Id.ShouldBe(job2.Id);
+        }
+
+        [TestMethod]
+        public void Query_Job_By_Query()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+            var job3 = new Job { UniqueName = "foo", Type = "AnotherOne" };
+
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
+            this.storageProvider.AddJob(job3);
+
+            var jobs = this.storageProvider.GetJobs(query: "Jobs.");
+
+            jobs.Items.Count.ShouldBe(2);
+        }
+
+        [TestMethod]
         public void Query_Jobs_Ordered()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
@@ -317,6 +350,63 @@ namespace Jobbr.Storage.MsSql.Tests
             var jobRuns = this.storageProvider.GetJobRunsByState(JobRunStates.Failed);
 
             jobRuns.Items.Count.ShouldBe(1);
+        }
+
+
+        [TestMethod]
+        public void Query_JobRuns_By_JobType()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+            var trigger2 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job2.Id, trigger2);
+
+            var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun2 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun3 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+
+            this.storageProvider.AddJobRun(jobRun1);
+            this.storageProvider.AddJobRun(jobRun2);
+            this.storageProvider.AddJobRun(jobRun3);
+
+            var jobRuns = this.storageProvider.GetJobRuns(jobTypeFilter: "Jobs.Test1");
+
+            jobRuns.Items.Count.ShouldBe(2);
+        }
+
+        [TestMethod]
+        public void Query_JobRuns_By_UniqueName()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+            var trigger2 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job2.Id, trigger2);
+
+            var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun2 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun3 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+
+            this.storageProvider.AddJobRun(jobRun1);
+            this.storageProvider.AddJobRun(jobRun2);
+            this.storageProvider.AddJobRun(jobRun3);
+
+            var jobRuns = this.storageProvider.GetJobRuns(jobUniqueNameFilter: "testjob1");
+
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]

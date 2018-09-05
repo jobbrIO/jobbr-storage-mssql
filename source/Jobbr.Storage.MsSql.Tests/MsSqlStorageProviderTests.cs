@@ -404,9 +404,9 @@ namespace Jobbr.Storage.MsSql.Tests
             this.storageProvider.AddJobRun(jobRun2);
             this.storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = this.storageProvider.GetJobRuns(jobUniqueNameFilter: "testjob1");
+            var jobRuns = this.storageProvider.GetJobRuns(1, 50, null, "testjob2", null, null);
 
-            jobRuns.Items.Count.ShouldBe(2);
+            jobRuns.Items.Count.ShouldBe(1);
         }
 
         [TestMethod]

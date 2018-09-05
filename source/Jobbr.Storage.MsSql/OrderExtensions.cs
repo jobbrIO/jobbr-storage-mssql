@@ -10,7 +10,7 @@ namespace Jobbr.Storage.MsSql
 {
     public static class OrderExtensions
     {
-        private static IDictionary<string, Expression<Func<JobRun, object>>> JobRunMapping { get; } = new Dictionary<string, Expression<Func<JobRun, object>>>
+        private static IDictionary<string, Expression<Func<Entities.JobRun, object>>> JobRunMapping { get; } = new Dictionary<string, Expression<Func<Entities.JobRun, object>>>
         {
             { nameof(JobRun.Id), run => run.Id },
             { nameof(JobRun.InstanceParameters), run => run.InstanceParameters },
@@ -23,7 +23,7 @@ namespace Jobbr.Storage.MsSql
             { nameof(JobRun.State), run => run.State }
         };
 
-        private static IDictionary<string, Expression<Func<Job, object>>> JobMapping { get; } = new Dictionary<string, Expression<Func<Job, object>>>
+        private static IDictionary<string, Expression<Func<Entities.Job, object>>> JobMapping { get; } = new Dictionary<string, Expression<Func<Entities.Job, object>>>
         {
             { nameof(Job.Id), run => run.Id },
             { nameof(Job.CreatedDateTimeUtc), run => run.CreatedDateTimeUtc },

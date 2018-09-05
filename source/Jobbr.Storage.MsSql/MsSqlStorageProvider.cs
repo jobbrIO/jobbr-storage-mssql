@@ -186,7 +186,7 @@ namespace Jobbr.Storage.MsSql
                 return connection.Select<JobRunInfo>(
                         connection.From<Entities.JobRun>()
                             .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
-                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.JobId == j.Id)
                             .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
                             .Where(p => p.PlannedStartDateTimeUtc >= utcNow)
                             .OrderBy(o => o.PlannedStartDateTimeUtc))
@@ -203,7 +203,7 @@ namespace Jobbr.Storage.MsSql
                 return connection.Select<JobRunInfo>(
                         connection.From<Entities.JobRun>()
                             .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
-                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
+                            .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.JobId == j.Id)
                             .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
                             .Where(p => p.State == JobRunStates.Scheduled)
                             .Where(p => p.PlannedStartDateTimeUtc >= utcNow)
@@ -254,7 +254,7 @@ namespace Jobbr.Storage.MsSql
             {
                 var sqlExpression = connection.From<Entities.JobRun>()
                     .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
-                    .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id);
+                    .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.JobId == j.Id);
 
                 if (jobTypeFilter != null)
                 {

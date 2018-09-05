@@ -30,7 +30,7 @@ namespace Jobbr.Storage.MsSql
             {
                 session.CreateTableIfNotExists<Entities.Job>();
                 session.CreateTableIfNotExists<Entities.JobRun>();
-                session.CreateTableIfNotExists<Entities.Trigger>();
+                session.CreateTableIfNotExists<Trigger>();
             }
         }
 
@@ -75,15 +75,17 @@ namespace Jobbr.Storage.MsSql
 
         public Job GetJobByUniqueName(string identifier)
         {
-            using (var connection = connectionFactory.Open())
+            using (var connection = this.connectionFactory.Open())
             {
-                return connection.Single<Entities.Job>(p => p.UniqueName == identifier).ToModel();
+                var job = connection.Single<Entities.Job>(p => p.UniqueName == identifier);
+
+                return job?.ToModel();
             }
         }
 
         public long GetJobsCount()
         {
-            using (var connection = connectionFactory.Open())
+            using (var connection = this.connectionFactory.Open())
             {
                 return connection.Count<Entities.Job>();
             }
@@ -151,7 +153,7 @@ namespace Jobbr.Storage.MsSql
             {
                 return connection.Select<JobRunInfo>(
                         connection.From<Entities.JobRun>()
-                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
                             .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
                             .Where(p => p.Id == id))
                     .Select(s => s.ToModel()).FirstOrDefault();
@@ -182,7 +184,7 @@ namespace Jobbr.Storage.MsSql
             {
                 return connection.Select<JobRunInfo>(
                         connection.From<Entities.JobRun>()
-                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
                             .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
                             .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
                             .Where(p => p.PlannedStartDateTimeUtc >= utcNow)
@@ -199,7 +201,7 @@ namespace Jobbr.Storage.MsSql
             {
                 return connection.Select<JobRunInfo>(
                         connection.From<Entities.JobRun>()
-                            .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                            .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
                             .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id)
                             .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
                             .Where(p => p.State == JobRunStates.Scheduled)
@@ -227,7 +229,7 @@ namespace Jobbr.Storage.MsSql
         public PagedResult<JobRun> GetJobRunsByUserId(string userId, int page = 1, int pageSize = 50, string jobTypeFilter = null,
             string jobUniqueNameFilter = null, params string[] sort)
         {
-            return this.GetJobRuns(sql => sql.And<Entities.Trigger>(p => p.UserId == userId), page, pageSize, jobTypeFilter, jobUniqueNameFilter, null, sort);
+            return this.GetJobRuns(sql => sql.And<Trigger>(p => p.UserId == userId), page, pageSize, jobTypeFilter, jobUniqueNameFilter, null, sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 1, int pageSize = 50, params string[] sort)
@@ -237,7 +239,7 @@ namespace Jobbr.Storage.MsSql
 
         public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1,int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, params string[] sort)
         {
-            return this.GetJobRuns(p => p.And<Entities.Trigger>(t => t.UserDisplayName == userDisplayName), page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort: sort);
+            return this.GetJobRuns(p => p.And<Trigger>(t => t.UserDisplayName == userDisplayName), page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort: sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
@@ -250,7 +252,7 @@ namespace Jobbr.Storage.MsSql
             using (var connection = this.connectionFactory.Open())
             {
                 var sqlExpression = connection.From<Entities.JobRun>()
-                    .Join<Entities.JobRun, Entities.Trigger>((jr, t) => jr.TriggerId == t.Id)
+                    .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
                     .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.TriggerId == j.Id);
 
                 if (jobTypeFilter != null)
@@ -317,7 +319,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                connection.DeleteById<Entities.Trigger>(triggerId);
+                connection.DeleteById<Trigger>(triggerId);
             }
         }
 
@@ -360,7 +362,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                var sqlExpression = connection.From<Entities.Trigger>()
+                var sqlExpression = connection.From<Trigger>()
                     .Join<Entities.Job>()
                     .Where(p => p.IsActive);
 
@@ -400,7 +402,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                connection.Update<Entities.Trigger>(new { IsActive = false }, p => p.Id == triggerId);
+                connection.Update<Trigger>(new { IsActive = false }, p => p.Id == triggerId);
             }
         }
 
@@ -408,7 +410,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                connection.Update<Entities.Trigger>(new { IsActive = true }, p => p.Id == triggerId);
+                connection.Update<Trigger>(new { IsActive = true }, p => p.Id == triggerId);
             }
         }
 
@@ -416,7 +418,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                return connection.Select<Entities.Trigger>(p => p.JobId == jobId && p.Id == triggerId)
+                return connection.Select<Trigger>(p => p.JobId == jobId && p.Id == triggerId)
                     .First()
                     .ToModel();
             }
@@ -426,7 +428,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                var sqlExpression = connection.From<Entities.Trigger>()
+                var sqlExpression = connection.From<Trigger>()
                     .Where(p => p.JobId == jobId);
 
                 var count = connection.Count(sqlExpression);

@@ -34,8 +34,8 @@ builder.AddMsSqlStorage(config =>
     // Configure your SqlDialect (2017 is set by default)
     configuration.DialectProvider = new SqlServer2017OrmLiteDialectProvider();
 
-	// Create tables (is set by default to true)
-	configuration.CreateTablesIfNotExists = true;
+    // Create tables (is set by default to true)
+    configuration.CreateTablesIfNotExists = true;
 });
 
 server.Start();

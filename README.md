@@ -31,11 +31,11 @@ builder.AddMsSqlStorage(config =>
     // Your connection string
     config.ConnectionString = @"Server=.\SQLEXPRESS;Integrated Security=true;InitialCatalog=JobbrDemoTest;";
 
-    // Default schema is "Jobbr", change if you want
-    config.Schema = "Own";
+    // Configure your SqlDialect (2017 is set by default)
+    configuration.DialectProvider = new SqlServer2017OrmLiteDialectProvider();
 
-    // Configure your SqlDialect
-    configuration.DialectProvider = ServiceStack.OrmLite.SqlServerDialect.Provider;
+	// Create tables (is set by default to true)
+	configuration.CreateTablesIfNotExists = true;
 });
 
 server.Start();

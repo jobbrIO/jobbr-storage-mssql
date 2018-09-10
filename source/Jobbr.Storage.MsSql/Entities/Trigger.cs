@@ -9,6 +9,8 @@ namespace Jobbr.Storage.MsSql.Entities
         [AutoIncrement]
         public long Id { get; set; }
         public TriggerType Type { get; set; }
+
+        [ForeignKey(typeof(Job))]
         public long JobId { get; set; }
         public bool IsActive { get; set; }
 

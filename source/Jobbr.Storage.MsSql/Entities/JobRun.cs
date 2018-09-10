@@ -9,7 +9,11 @@ namespace Jobbr.Storage.MsSql.Entities
     {
         [AutoIncrement]
         public long Id { get; set; }
+
+        [ForeignKey(typeof(Job))]
         public long JobId { get; set; }
+
+        [ForeignKey(typeof(Trigger))]
         public long TriggerId { get; set; }
         public JobRunStates State { get; set; }
         public double? Progress { get; set; }
@@ -17,9 +21,11 @@ namespace Jobbr.Storage.MsSql.Entities
         public DateTime? ActualStartDateTimeUtc { get; set; }
         public DateTime? ActualEndDateTimeUtc { get; set; }
         public DateTime? EstimatedEndDateTimeUtc { get; set; }
-        [StringLength(int.MaxValue)]
+
+        [CustomField("NVARCHAR(MAX)")]
         public string JobParameters { get; set; }
-        [StringLength(int.MaxValue)]
+
+        [CustomField("NVARCHAR(MAX)")]
         public string InstanceParameters { get; set; }
         public int? Pid { get; set; }
     }

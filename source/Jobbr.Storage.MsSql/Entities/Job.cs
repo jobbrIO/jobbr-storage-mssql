@@ -16,7 +16,7 @@ namespace Jobbr.Storage.MsSql.Entities
         [StringLength(100)]
         public string Title { get; set; }
 
-        [StringLength(int.MaxValue)]
+        [CustomField("NVARCHAR(MAX)")]
         public string Parameters { get; set; }
 
         [StringLength(100)]

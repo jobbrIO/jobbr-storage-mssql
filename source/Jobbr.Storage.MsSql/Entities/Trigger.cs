@@ -18,7 +18,7 @@ namespace Jobbr.Storage.MsSql.Entities
         [StringLength(100)]
         public string UserDisplayName { get; set; }
 
-        [StringLength(int.MaxValue)]
+        [CustomField("NVARCHAR(MAX)")]
         public string Parameters { get; set; }
         public string Comment { get; set; }
         public DateTime CreatedDateTimeUtc { get; set; }

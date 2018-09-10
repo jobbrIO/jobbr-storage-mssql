@@ -29,8 +29,8 @@ namespace Jobbr.Storage.MsSql
             using (var session = this.connectionFactory.OpenDbConnection())
             {
                 session.CreateTableIfNotExists<Entities.Job>();
-                session.CreateTableIfNotExists<Entities.JobRun>();
                 session.CreateTableIfNotExists<Trigger>();
+                session.CreateTableIfNotExists<Entities.JobRun>();
             }
         }
 

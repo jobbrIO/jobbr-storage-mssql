@@ -42,7 +42,7 @@ server.Start();
 ```
 
 ### Database-Schema
-The extensions assumes that there are already all related tables in the referenced database. Please make sure that these tables are created by using the script located on [source/Jobbr.Storage.MsSql/CreateSchemaAndTables.sql](source/Jobbr.Storage.MsSql/CreateSchemaAndTables.sql).
+By default, the extension tries to create the tables if they are not present. You can disable this behaviour (see example above) and create the tables manually using the script located on [source/Jobbr.Storage.MsSql/CreateTables.sql](source/Jobbr.Storage.MsSql/CreateTables.sql).
 
 ![Diagram](https://raw.githubusercontent.com/jobbrIO/jobbr-storage-mssql/develop/docs/diagram.png)
 

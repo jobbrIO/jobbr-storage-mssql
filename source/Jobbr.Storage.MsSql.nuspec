@@ -11,8 +11,8 @@
     <description>Jobbr is a .NET JobServer</description>
     <copyright>Copyright 2017</copyright>
     <dependencies>
-      <dependency id="Jobbr.ComponentModel.Registration" version="[1.0.0]"/>
-      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.1.0]"/>
+      <dependency id="Jobbr.ComponentModel.Registration" version="[1.0,1.1)"/>
+      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.1,1.2)"/>
       <dependency id="ServiceStack.Common" version="[5,6)"/>
       <dependency id="ServiceStack.Interfaces" version="[5,6)"/>
       <dependency id="ServiceStack.OrmLite" version="[5,6)"/>

@@ -19,6 +19,7 @@ namespace Jobbr.Storage.MsSql
             { nameof(JobRun.PlannedStartDateTimeUtc), run => run.PlannedStartDateTimeUtc },
             { nameof(JobRun.Progress), run => run.Progress },
             { nameof(JobRun.ActualEndDateTimeUtc), run => run.ActualEndDateTimeUtc },
+            { nameof(JobRun.ActualStartDateTimeUtc), run => run.ActualStartDateTimeUtc },
             { nameof(JobRun.EstimatedEndDateTimeUtc), run => run.EstimatedEndDateTimeUtc },
             { nameof(JobRun.State), run => run.State }
         };

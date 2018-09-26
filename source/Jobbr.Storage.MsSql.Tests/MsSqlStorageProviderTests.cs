@@ -438,6 +438,40 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        public void Query_JobRuns_For_Specific_States_Paged()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
+            var jobRun2 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
+            var jobRun3 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed };
+            var jobRun4 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Connected };
+
+            this.storageProvider.AddJobRun(jobRun1);
+            this.storageProvider.AddJobRun(jobRun2);
+            this.storageProvider.AddJobRun(jobRun3);
+            this.storageProvider.AddJobRun(jobRun4);
+
+            var jobRuns = this.storageProvider.GetJobRunsByStates(new [] { JobRunStates.Failed, JobRunStates.Connected });
+
+            jobRuns.Items.Count.ShouldBe(2);
+
+            jobRuns = this.storageProvider.GetJobRunsByStates(new[] { JobRunStates.Completed });
+
+            jobRuns.Items.Count.ShouldBe(2);
+
+            jobRuns = this.storageProvider.GetJobRunsByStates(new[] {JobRunStates.Failed, JobRunStates.Completed });
+
+            jobRuns.Items.Count.ShouldBe(3);
+        }
+
+        [TestMethod]
         public void Get_JobRuns_By_Trigger_Id()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };

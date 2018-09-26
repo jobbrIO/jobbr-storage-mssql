@@ -248,6 +248,11 @@ namespace Jobbr.Storage.MsSql
             return this.GetJobRuns(sql => sql.Where(p => p.State == state), page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
         }
 
+        public PagedResult<JobRun> GetJobRunsByStates(JobRunStates[] states, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        {
+            return this.GetJobRuns(sql => sql.Where(p => states.Contains(p.State)), page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
+        }
+
         private PagedResult<JobRun> GetJobRuns(Action<SqlExpression<Entities.JobRun>> sql, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
         {
             using (var connection = this.connectionFactory.Open())

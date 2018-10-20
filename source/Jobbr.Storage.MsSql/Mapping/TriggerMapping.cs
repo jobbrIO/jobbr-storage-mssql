@@ -21,6 +21,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                         JobId = entity.JobId,
                         UserDisplayName = entity.UserDisplayName,
                         UserId = entity.UserId,
+                        Deleted = entity.Deleted,
                     };
 
                 case Entities.TriggerType.RecurringTrigger:
@@ -38,6 +39,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                         EndDateTimeUtc = entity.EndDateTimeUtc,
                         NoParallelExecution = entity.NoParallelExecution,
                         StartDateTimeUtc = entity.StartDateTimeUtc,
+                        Deleted = entity.Deleted,
                     };
 
                 case Entities.TriggerType.ScheduledTrigger:
@@ -52,6 +54,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                         Parameters = entity.Parameters,
                         Comment = entity.Comment,
                         StartDateTimeUtc = entity.StartDateTimeUtc.GetValueOrDefault(),
+                        Deleted = entity.Deleted,
                     };
 
                 default:
@@ -74,6 +77,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                 Type = Entities.TriggerType.InstantTrigger,
                 DelayedMinutes = model.DelayedMinutes,
                 NoParallelExecution = false,
+                Deleted = model.Deleted,
             };
         }
 
@@ -92,6 +96,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                 Type = Entities.TriggerType.ScheduledTrigger,
                 NoParallelExecution = false,
                 StartDateTimeUtc = model.StartDateTimeUtc,
+                Deleted = model.Deleted,
             };
         }
 
@@ -112,6 +117,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                 StartDateTimeUtc = model.StartDateTimeUtc,
                 EndDateTimeUtc = model.EndDateTimeUtc,
                 Definition = model.Definition,
+                Deleted = model.Deleted,
             };
         }
     }

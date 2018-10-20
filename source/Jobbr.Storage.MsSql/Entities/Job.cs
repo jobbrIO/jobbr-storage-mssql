@@ -24,5 +24,7 @@ namespace Jobbr.Storage.MsSql.Entities
 
         public DateTime? UpdatedDateTimeUtc { get; set; }
         public DateTime? CreatedDateTimeUtc { get; set; }
+
+        public bool Deleted { get; set; }
     }
 }

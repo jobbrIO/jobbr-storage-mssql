@@ -88,17 +88,17 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                return connection.Count<Entities.Job>();
+                return connection.Count<Entities.Job>(p => p.Deleted == false);
             }
         }
 
-        public PagedResult<Job> GetJobs(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        public PagedResult<Job> GetJobs(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, bool showDeleted = false, params string[] sort)
         {
             AssertOnlyOneFilterIsActive(jobTypeFilter, jobUniqueNameFilter, query);
 
             using (var connection = this.connectionFactory.Open())
             {
-                var sqlExpression = connection.From<Entities.Job>();
+                var sqlExpression = connection.From<Entities.Job>().Where(p => p.Deleted == showDeleted);
 
                 if (jobTypeFilter != null)
                 {
@@ -175,7 +175,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                connection.Update<Entities.JobRun>(new {Progress = progress}, p => p.Id == jobRunId);
+                connection.Update<Entities.JobRun>(new { Progress = progress }, p => p.Id == jobRunId);
             }
         }
 
@@ -189,6 +189,7 @@ namespace Jobbr.Storage.MsSql
                             .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.JobId == j.Id)
                             .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
                             .Where(p => p.PlannedStartDateTimeUtc >= utcNow)
+                            .Where(p => p.Deleted == false)
                             .OrderBy(o => o.PlannedStartDateTimeUtc))
                             .Take(1)
                     .Select(s => s.ToModel())
@@ -207,6 +208,7 @@ namespace Jobbr.Storage.MsSql
                             .Where(p => p.TriggerId == triggerId && p.JobId == jobId)
                             .Where(p => p.State == JobRunStates.Scheduled)
                             .Where(p => p.PlannedStartDateTimeUtc >= utcNow)
+                            .Where(p => p.Deleted == false)
                             .OrderBy(o => o.PlannedStartDateTimeUtc))
                     .Take(1)
                     .Select(s => s.ToModel())
@@ -215,51 +217,52 @@ namespace Jobbr.Storage.MsSql
         }
 
         public PagedResult<JobRun> GetJobRuns(int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null,
-            string query = null, params string[] sort)
+            string query = null, bool showDeleted = false, params string[] sort)
         {
             AssertOnlyOneFilterIsActive(jobTypeFilter, jobUniqueNameFilter, query);
 
-            return this.GetJobRuns(null, page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
+            return this.GetJobRuns(null, page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, showDeleted, sort);
         }
 
-        public PagedResult<JobRun> GetJobRunsByJobId(int jobId, int page = 1, int pageSize = 50, params string[] sort)
+        public PagedResult<JobRun> GetJobRunsByJobId(int jobId, int page = 1, int pageSize = 50, bool showDeleted = false, params string[] sort)
         {
-            return this.GetJobRuns(sql => sql.Where(p => p.JobId == jobId), page, pageSize, sort: sort);
+            return this.GetJobRuns(sql => sql.Where(p => p.JobId == jobId), page, pageSize, showDeleted: showDeleted, sort: sort);
         }
 
         public PagedResult<JobRun> GetJobRunsByUserId(string userId, int page = 1, int pageSize = 50, string jobTypeFilter = null,
-            string jobUniqueNameFilter = null, params string[] sort)
+            string jobUniqueNameFilter = null, bool showDeleted = false, params string[] sort)
         {
-            return this.GetJobRuns(sql => sql.And<Trigger>(p => p.UserId == userId), page, pageSize, jobTypeFilter, jobUniqueNameFilter, null, sort);
+            return this.GetJobRuns(sql => sql.And<Trigger>(p => p.UserId == userId), page, pageSize, jobTypeFilter, jobUniqueNameFilter, null, showDeleted, sort);
         }
 
-        public PagedResult<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 1, int pageSize = 50, params string[] sort)
+        public PagedResult<JobRun> GetJobRunsByTriggerId(long jobId, long triggerId, int page = 1, int pageSize = 50, bool showDeleted = false, params string[] sort)
         {
-            return this.GetJobRuns(sql => sql.Where(p => p.TriggerId == triggerId && p.JobId == jobId), page, pageSize, sort: sort);
+            return this.GetJobRuns(sql => sql.Where(p => p.TriggerId == triggerId && p.JobId == jobId), page, pageSize, showDeleted: showDeleted, sort: sort);
         }
 
-        public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1,int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, params string[] sort)
+        public PagedResult<JobRun> GetJobRunsByUserDisplayName(string userDisplayName, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, bool showDeleted = false, params string[] sort)
         {
-            return this.GetJobRuns(p => p.And<Trigger>(t => t.UserDisplayName == userDisplayName), page, pageSize, jobTypeFilter, jobUniqueNameFilter, sort: sort);
+            return this.GetJobRuns(p => p.And<Trigger>(t => t.UserDisplayName == userDisplayName), page, pageSize, jobTypeFilter, jobUniqueNameFilter, showDeleted: showDeleted, sort: sort);
         }
 
-        public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        public PagedResult<JobRun> GetJobRunsByState(JobRunStates state, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, bool showDeleted = false, params string[] sort)
         {
-            return this.GetJobRuns(sql => sql.Where(p => p.State == state), page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
+            return this.GetJobRuns(sql => sql.Where(p => p.State == state), page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, showDeleted, sort);
         }
 
-        public PagedResult<JobRun> GetJobRunsByStates(JobRunStates[] states, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        public PagedResult<JobRun> GetJobRunsByStates(JobRunStates[] states, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, bool showDeleted = false, params string[] sort)
         {
-            return this.GetJobRuns(sql => sql.Where(p => states.Contains(p.State)), page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, sort);
+            return this.GetJobRuns(sql => sql.Where(p => states.Contains(p.State)), page, pageSize, jobTypeFilter, jobUniqueNameFilter, query, showDeleted, sort);
         }
 
-        private PagedResult<JobRun> GetJobRuns(Action<SqlExpression<Entities.JobRun>> sql, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, params string[] sort)
+        private PagedResult<JobRun> GetJobRuns(Action<SqlExpression<Entities.JobRun>> sql, int page = 1, int pageSize = 50, string jobTypeFilter = null, string jobUniqueNameFilter = null, string query = null, bool showDeleted = false, params string[] sort)
         {
             using (var connection = this.connectionFactory.Open())
             {
                 var sqlExpression = connection.From<Entities.JobRun>()
                     .Join<Entities.JobRun, Trigger>((jr, t) => jr.TriggerId == t.Id)
-                    .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.JobId == j.Id);
+                    .Join<Entities.JobRun, Entities.Job>((jr, j) => jr.JobId == j.Id)
+                    .And<Entities.JobRun>(p => p.Deleted == showDeleted);
 
                 if (jobTypeFilter != null)
                 {
@@ -370,7 +373,8 @@ namespace Jobbr.Storage.MsSql
             {
                 var sqlExpression = connection.From<Trigger>()
                     .Join<Entities.Job>()
-                    .Where(p => p.IsActive);
+                    .And<Entities.Job>(p => p.Deleted == false)
+                    .Where(p => p.IsActive && p.Deleted == false);
 
                 if (jobTypeFilter != null)
                 {
@@ -430,12 +434,13 @@ namespace Jobbr.Storage.MsSql
             }
         }
 
-        public PagedResult<JobTriggerBase> GetTriggersByJobId(long jobId, int page = 1, int pageSize = 50)
+        public PagedResult<JobTriggerBase> GetTriggersByJobId(long jobId, int page = 1, int pageSize = 50, bool showDeleted = false)
         {
             using (var connection = this.connectionFactory.Open())
             {
                 var sqlExpression = connection.From<Trigger>()
-                    .Where(p => p.JobId == jobId);
+                    .Where(p => p.JobId == jobId)
+                    .Where(p => p.Deleted == showDeleted);
 
                 var count = connection.Count(sqlExpression);
 
@@ -451,7 +456,7 @@ namespace Jobbr.Storage.MsSql
                     Page = page,
                     PageSize = pageSize,
                     Items = rows,
-                    TotalItems = (int) count,
+                    TotalItems = (int)count,
                 };
             }
         }

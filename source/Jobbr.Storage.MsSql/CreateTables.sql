@@ -12,6 +12,7 @@ CREATE TABLE [dbo].[Jobs](
 	[Type] [varchar](100) NULL,
 	[UpdatedDateTimeUtc] [datetime] NULL,
 	[CreatedDateTimeUtc] [datetime] NULL,
+	[Deleted] [bit] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -38,6 +39,7 @@ CREATE TABLE [dbo].[Triggers](
 	[Definition] [varchar](8000) NULL,
 	[NoParallelExecution] [bit] NOT NULL,
 	[DelayedMinutes] [int] NOT NULL,
+	[Deleted] [bit] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -65,6 +67,7 @@ CREATE TABLE [dbo].[JobRuns](
 	[JobParameters] [nvarchar](max) NULL,
 	[InstanceParameters] [nvarchar](max) NULL,
 	[Pid] [int] NULL,
+	[Deleted] [bit] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

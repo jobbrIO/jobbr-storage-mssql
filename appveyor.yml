@@ -30,7 +30,7 @@ build:
   project: source/Jobbr.Storage.MsSql.sln
 
 after_build:
-  - cmd: nuget install ILMerge -ExcludeVersion
+  - cmd: nuget install ILMerge -ExcludeVersion -Version 2.14.1208
   - cmd: mkdir ilmerged
   - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/Jobbr.Storage.MsSql.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
   - cmd: nuget pack source\Jobbr.Storage.MsSql.nuspec -version "%GitVersion_SemVer%" -prop "target=%CONFIGURATION%"

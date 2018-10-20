@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Linq;
 using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ServiceStack.OrmLite;
@@ -268,6 +269,46 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        public void Querying_Triggers_Of_Job_Ignoring_Deleted()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger();
+            var trigger2 = new InstantTrigger();
+            var trigger3 = new InstantTrigger { Deleted = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job1.Id, trigger2);
+            this.storageProvider.AddTrigger(job1.Id, trigger3);
+
+            var triggersOfJob1 = this.storageProvider.GetTriggersByJobId(job1.Id);
+
+            triggersOfJob1.Items.Count.ShouldBe(2);
+        }
+
+        [TestMethod]
+        public void Querying_Triggers_Of_Job_Only_Deleted()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger();
+            var trigger2 = new InstantTrigger();
+            var trigger3 = new InstantTrigger { Deleted = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job1.Id, trigger2);
+            this.storageProvider.AddTrigger(job1.Id, trigger3);
+
+            var triggersOfJob1 = this.storageProvider.GetTriggersByJobId(job1.Id, showDeleted: true);
+
+            triggersOfJob1.Items.Count.ShouldBe(1);
+        }
+
+        [TestMethod]
         public void Get_JobRun_By_Id()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", Parameters = "param", Title = "title" };
@@ -382,6 +423,34 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        public void Query_JobRuns_By_JobType_Ignoring_Deleted()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+            var trigger2 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job2.Id, trigger2);
+
+            var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, Deleted = true };
+            var jobRun2 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun3 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+
+            this.storageProvider.AddJobRun(jobRun1);
+            this.storageProvider.AddJobRun(jobRun2);
+            this.storageProvider.AddJobRun(jobRun3);
+
+            var jobRuns = this.storageProvider.GetJobRuns(jobTypeFilter: "Jobs.Test1");
+
+            jobRuns.Items.Count.ShouldBe(1);
+        }
+
+        [TestMethod]
         public void Query_JobRuns_By_UniqueName()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
@@ -404,9 +473,39 @@ namespace Jobbr.Storage.MsSql.Tests
             this.storageProvider.AddJobRun(jobRun2);
             this.storageProvider.AddJobRun(jobRun3);
 
-            var jobRuns = this.storageProvider.GetJobRuns(1, 50, null, "testjob2", null, null);
+            var jobRuns = this.storageProvider.GetJobRuns(1, 50, null, "testjob2", null, false, null);
 
             jobRuns.Items.Count.ShouldBe(1);
+        }
+
+        [TestMethod]
+        public void Query_JobRuns_By_UniqueName_Ignoring_Deleted()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+            var job2 = new Job { UniqueName = "testjob2", Type = "Jobs.Test2" };
+
+            this.storageProvider.AddJob(job1);
+            this.storageProvider.AddJob(job2);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+            var trigger2 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job2.Id, trigger2);
+
+            var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun2 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun3 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
+            var jobRun4 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, Deleted = true};
+
+            this.storageProvider.AddJobRun(jobRun1);
+            this.storageProvider.AddJobRun(jobRun2);
+            this.storageProvider.AddJobRun(jobRun3);
+            this.storageProvider.AddJobRun(jobRun4);
+
+            var jobRuns = this.storageProvider.GetJobRuns(1, 50, null, "testjob2", null, false, null);
+
+            jobRuns.Items.Count.ShouldBe(2);
         }
 
         [TestMethod]
@@ -493,6 +592,60 @@ namespace Jobbr.Storage.MsSql.Tests
             var jobRuns = this.storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id);
 
             jobRuns.Items.Count.ShouldBe(3);
+        }
+
+        [TestMethod]
+        public void Get_JobRuns_By_Trigger_Id_Ignoring_Deleted()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
+            var jobRun2 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
+            var jobRun3 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed };
+            var jobRun4 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed, Deleted = true };
+
+            this.storageProvider.AddJobRun(jobRun1);
+            this.storageProvider.AddJobRun(jobRun2);
+            this.storageProvider.AddJobRun(jobRun3);
+            this.storageProvider.AddJobRun(jobRun4);
+
+            var jobRuns = this.storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id);
+
+            jobRuns.Items.Count.ShouldBe(3);
+        }
+
+        [TestMethod]
+        public void Get_JobRuns_By_Trigger_Id_Only_Deleted()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
+            var jobRun2 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed };
+            var jobRun3 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed };
+            var jobRun4 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed, Deleted = true };
+
+            this.storageProvider.AddJobRun(jobRun1);
+            this.storageProvider.AddJobRun(jobRun2);
+            this.storageProvider.AddJobRun(jobRun3);
+            this.storageProvider.AddJobRun(jobRun4);
+
+            var jobRuns = this.storageProvider.GetJobRunsByTriggerId(job1.Id, trigger1.Id, showDeleted: true);
+
+            jobRuns.Items.Count.ShouldBe(1);
+
+            jobRuns.Items.First().Id.ShouldBe(jobRun4.Id);
         }
 
         [TestMethod]
@@ -909,6 +1062,88 @@ namespace Jobbr.Storage.MsSql.Tests
             var jobCount = this.storageProvider.GetJobsCount();
 
             jobCount.ShouldBe(1);
+        }
+
+        [TestMethod]
+        public void Job_Count_Does_Not_Count_Deleted_Jobs()
+        {
+            var job = new Job
+            {
+                UniqueName = "testjob",
+                Type = "Jobs.Test"
+            };
+
+            this.storageProvider.AddJob(job);
+
+            var jobCount = this.storageProvider.GetJobsCount();
+
+            job.Deleted = true;
+
+            this.storageProvider.Update(job);
+
+            var jobCount2 = this.storageProvider.GetJobsCount();
+
+            jobCount.ShouldBeGreaterThan(jobCount2);
+        }
+
+        [TestMethod]
+        public void Get_Only_Deleted_Jobs()
+        {
+            var job = new Job
+            {
+                UniqueName = "testjob",
+                Type = "Jobs.Test",
+                Deleted = false
+            };
+
+            var deletedJob = new Job
+            {
+                UniqueName = "testjob2",
+                Type = "Jobs.Test2",
+                Deleted = true
+            };
+
+            this.storageProvider.AddJob(job);
+            this.storageProvider.AddJob(deletedJob);
+
+            var jobs = this.storageProvider.GetJobs(showDeleted: true);
+
+            jobs.TotalItems.ShouldBe(1);
+
+            var jobFromStorage = jobs.Items.First();
+            jobFromStorage.Id.ShouldBe(deletedJob.Id);
+            jobFromStorage.UniqueName.ShouldBe(deletedJob.UniqueName);
+            jobFromStorage.Type.ShouldBe(deletedJob.Type);
+        }
+
+        [TestMethod]
+        public void Get_Only_Not_Deleted_Jobs()
+        {
+            var job = new Job
+            {
+                UniqueName = "testjob",
+                Type = "Jobs.Test",
+                Deleted = false
+            };
+
+            var deletedJob = new Job
+            {
+                UniqueName = "testjob2",
+                Type = "Jobs.Test2",
+                Deleted = true
+            };
+
+            this.storageProvider.AddJob(job);
+            this.storageProvider.AddJob(deletedJob);
+
+            var jobs = this.storageProvider.GetJobs();
+
+            jobs.TotalItems.ShouldBe(1);
+
+            var jobFromStorage = jobs.Items.First();
+            jobFromStorage.Id.ShouldBe(job.Id);
+            jobFromStorage.UniqueName.ShouldBe(job.UniqueName);
+            jobFromStorage.Type.ShouldBe(job.Type);
         }
     }
 }

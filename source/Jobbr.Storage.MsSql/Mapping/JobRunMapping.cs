@@ -18,6 +18,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                 PlannedStartDateTimeUtc = entity.PlannedStartDateTimeUtc,
                 Progress = entity.Progress,
                 State = entity.State,
+                Deleted = entity.Deleted,
                 Job = new Job
                 {
                     Id = entity.JobId,
@@ -43,6 +44,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                     UserId = entity.TriggerUserId,
                     IsActive = entity.TriggerIsActive,
                     Comment = entity.TriggerComment,
+                    Deleted = entity.Deleted,
                 };
             }
             else if (entity.TriggerType == Entities.TriggerType.RecurringTrigger)
@@ -61,6 +63,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                     StartDateTimeUtc = entity.TriggerStartDateTimeUtc,
                     Definition = entity.TriggerDefinition,
                     NoParallelExecution = entity.TriggerNoParallelExecution,
+                    Deleted = entity.Deleted,
                 };
             }
             else if (entity.TriggerType == Entities.TriggerType.ScheduledTrigger)
@@ -79,6 +82,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                     StartDateTimeUtc = entity.TriggerStartDateTimeUtc,
                     Definition = entity.TriggerDefinition,
                     NoParallelExecution = entity.TriggerNoParallelExecution,
+                    Deleted = entity.Deleted,
                 };
             }
 
@@ -101,6 +105,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                 State = model.State,
                 JobId = model.Job.Id,
                 TriggerId = model.Trigger.Id,
+                Deleted = model.Deleted,
             };
 
             return entity;

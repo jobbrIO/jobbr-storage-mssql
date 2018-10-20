@@ -38,5 +38,6 @@ namespace Jobbr.Storage.MsSql.Entities
         
         public string InstanceParameters { get; set; }
         public int? Pid { get; set; }
+        public bool Deleted { get; set; }
     }
 }

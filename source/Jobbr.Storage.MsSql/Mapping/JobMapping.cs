@@ -14,7 +14,8 @@ namespace Jobbr.Storage.MsSql.Mapping
                 Title = entity.Title,
                 Type = entity.Type,
                 UniqueName = entity.UniqueName,
-                UpdatedDateTimeUtc = entity.UpdatedDateTimeUtc
+                UpdatedDateTimeUtc = entity.UpdatedDateTimeUtc,
+                Deleted = entity.Deleted,
             };
 
             return job;
@@ -31,7 +32,8 @@ namespace Jobbr.Storage.MsSql.Mapping
                 Title = model.Title,
                 Type = model.Type,
                 UniqueName = model.UniqueName,
-                UpdatedDateTimeUtc = model.UpdatedDateTimeUtc
+                UpdatedDateTimeUtc = model.UpdatedDateTimeUtc,
+                Deleted = model.Deleted,
             };
 
             return entity;

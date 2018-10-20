@@ -32,5 +32,7 @@ namespace Jobbr.Storage.MsSql.Entities
         public bool NoParallelExecution { get; set; }
 
         public int DelayedMinutes { get; set; }
+
+        public bool Deleted { get; set; }
     }
 }

@@ -440,7 +440,8 @@ namespace Jobbr.Storage.MsSql
             {
                 var sqlExpression = connection.From<Trigger>()
                     .Where(p => p.JobId == jobId)
-                    .Where(p => p.Deleted == showDeleted);
+                    .Where(p => p.Deleted == showDeleted)
+                    .OrderByDescending(o => o.IsActive);
 
                 var count = connection.Count(sqlExpression);
 

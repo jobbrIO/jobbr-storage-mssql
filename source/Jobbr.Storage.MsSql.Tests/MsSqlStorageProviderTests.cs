@@ -269,6 +269,24 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        public void Active_Triggers_Come_First()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = false };
+            var trigger2 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+            this.storageProvider.AddTrigger(job1.Id, trigger2);
+
+            var triggersOfJob1 = this.storageProvider.GetTriggersByJobId(job1.Id);
+
+            triggersOfJob1.Items.Count.ShouldBe(2);
+        }
+
+        [TestMethod]
         public void Querying_Triggers_Of_Job_Ignoring_Deleted()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };

@@ -22,8 +22,14 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="..\ilmerged\Jobbr.Storage.MsSql.dll" target="lib\net462"/>
-    <file src="..\ilmerged\Jobbr.Storage.MsSql.pdb" target="lib\net462"/>
     <file src="Jobbr.Storage.MsSql\CreateTables.sql" target=""/>
+    
+    <!-- .NET Framework 4.6.2 -->
+    <file src="..\ilmerged\net462\Jobbr.Storage.MsSql.dll" target="lib\net462"/>
+    <file src="..\ilmerged\net462\Jobbr.Storage.MsSql.pdb" target="lib\net462"/>
+    
+    <!-- .NET Standard 2.0 -->
+    <file src="..\ilmerged\netstandard2.0\Jobbr.Storage.MsSql.dll" target="lib\netstandard2.0"/>
+    <file src="..\ilmerged\netstandard2.0\Jobbr.Storage.MsSql.pdb" target="lib\netstandard2.0"/>
   </files>
 </package>

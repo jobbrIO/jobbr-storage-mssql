@@ -32,7 +32,10 @@ build:
 after_build:
   - cmd: nuget install ILMerge -ExcludeVersion -Version 2.14.1208
   - cmd: mkdir ilmerged
-  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/Jobbr.Storage.MsSql.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
+  - cmd: mkdir ilmerged/net462
+  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/netstandard2.0/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/netstandard2.0/Jobbr.Storage.MsSql.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
+  - cmd: mkdir ilmerged/netstandard2.0
+  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/netstandard2.0/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/netstandard2.0/Jobbr.Storage.MsSql.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
   - cmd: nuget pack source\Jobbr.Storage.MsSql.nuspec -version "%GitVersion_SemVer%" -prop "target=%CONFIGURATION%"
   - cmd: appveyor PushArtifact "Jobbr.Storage.MsSql.%GitVersion_SemVer%.nupkg"
 

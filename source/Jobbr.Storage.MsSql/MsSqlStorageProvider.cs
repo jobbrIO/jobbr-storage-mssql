@@ -523,6 +523,14 @@ namespace Jobbr.Storage.MsSql
             return true;
         }
 
+        public void ApplyRetention(DateTimeOffset date)
+        {
+            using (var connection = this.connectionFactory.Open())
+            {
+                connection.Delete<Entities.JobRun>( p => p.ActualEndDateTimeUtc.HasValue && p.ActualEndDateTimeUtc.Value <= date.UtcDateTime);
+            }
+        }
+
         private static void AssertOnlyOneFilterIsActive(string jobTypeFilter, string jobUniqueNameFilter, string query)
         {
             var sum = IsParameterSet(jobTypeFilter) + IsParameterSet(jobUniqueNameFilter) + IsParameterSet(query);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using Jobbr.ComponentModel.JobStorage.Model;
@@ -14,7 +15,7 @@ namespace Jobbr.Storage.MsSql.Tests
     {
         private MsSqlStorageProvider storageProvider;
 
-        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("APPVEYOR") == "True" ? "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!" : "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("APPVEYOR") == "True" ? "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!" : "Data Source=.;Initial Catalog=JobbrTest;Integrated Security=True";
 
         [TestInitialize]
         public void SetupDatabaseInstance()
@@ -411,6 +412,49 @@ namespace Jobbr.Storage.MsSql.Tests
             jobRuns.Items.Count.ShouldBe(1);
         }
 
+        [TestMethod]
+        public void HardDeleteJobRunsOlderThan_Delete_JobRuns_And_Leave_Active_Triggers()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            foreach (var jobRun in new List<JobRun>
+            {
+                new JobRun
+                {
+                    Job = new Job {Id = job1.Id}, Trigger = new InstantTrigger {Id = trigger1.Id},
+                    PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed,
+                    ActualEndDateTimeUtc = DateTime.UtcNow.AddDays(-31)
+                },
+                new JobRun
+                {
+                    Job = new Job {Id = job1.Id}, Trigger = new InstantTrigger {Id = trigger1.Id},
+                    PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Completed,
+                    ActualEndDateTimeUtc = DateTime.UtcNow.AddDays(-30)
+                },
+                new JobRun
+                {
+                    Job = new Job {Id = job1.Id}, Trigger = new InstantTrigger {Id = trigger1.Id},
+                    PlannedStartDateTimeUtc = DateTime.UtcNow, State = JobRunStates.Failed,
+                    ActualEndDateTimeUtc = DateTime.UtcNow.AddDays(-29)                    
+                }
+            })
+            {
+                this.storageProvider.AddJobRun(jobRun);
+            }
+
+            this.storageProvider.ApplyRetention(DateTimeOffset.UtcNow.AddDays(-30));
+
+            var jobRuns = this.storageProvider.GetJobRuns();
+            jobRuns.Items.ShouldAllBe(j => j.ActualEndDateTimeUtc > DateTimeOffset.UtcNow.AddDays(-30));
+            this.storageProvider.GetActiveTriggers().Items.Count.ShouldBe(1);
+            this.storageProvider.GetActiveTriggers().Items.First().Id.ShouldBe(trigger1.Id);
+        }
 
         [TestMethod]
         public void Query_JobRuns_By_JobType()

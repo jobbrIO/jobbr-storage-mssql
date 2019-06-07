@@ -97,6 +97,7 @@
     <Compile Include="JobbrMsSqlConfigurationValidator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="OrderExtensions.cs" />
+    <Compile Include="RetentionEnforcer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CreateTables.sql">

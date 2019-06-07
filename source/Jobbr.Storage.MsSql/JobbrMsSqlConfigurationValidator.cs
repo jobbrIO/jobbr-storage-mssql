@@ -23,6 +23,13 @@ namespace Jobbr.Storage.MsSql
                 return false;
             }
 
+            if (config.Retention.HasValue &&
+                config.Retention.Value < TimeSpan.FromDays(1))
+            {
+                Logger.Error("Retention must be bigger than 1 day.");
+                return false;
+            }
+
             return true;
         }
     }

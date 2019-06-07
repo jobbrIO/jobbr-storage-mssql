@@ -14,5 +14,9 @@ namespace Jobbr.Storage.MsSql
         public bool CreateTablesIfNotExists { get; set; }
 
         public IOrmLiteDialectProvider DialectProvider { get; set; } = new SqlServer2017OrmLiteDialectProvider();
+
+        public TimeSpan? Retention { get; set; }
+
+        public TimeSpan RetentionEnforcementInterval { get; set; } = TimeSpan.FromDays(1);
     }
 }

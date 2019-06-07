@@ -13,6 +13,7 @@ namespace Jobbr.Storage.MsSql
     public class MsSqlStorageProvider : IJobStorageProvider
     {
         private readonly OrmLiteConnectionFactory connectionFactory;
+        private RetentionEnforcer retentionEnforcer;
 
         public MsSqlStorageProvider(JobbrMsSqlConfiguration configuration)
         {
@@ -21,6 +22,11 @@ namespace Jobbr.Storage.MsSql
             if (configuration.CreateTablesIfNotExists)
             {
                 this.CreateTables();
+            }
+
+            if (configuration.Retention.HasValue)
+            {
+                this.retentionEnforcer = new RetentionEnforcer(this, configuration.Retention.Value, configuration.RetentionEnforcementInterval);
             }
         }
 
@@ -521,6 +527,19 @@ namespace Jobbr.Storage.MsSql
             }
 
             return true;
+        }
+
+        public void ApplyRetention(DateTimeOffset deadline)
+        {
+            using (var connection = this.connectionFactory.Open())
+            {
+                var triggerIds = connection.Select<Entities.JobRun>(p => p.ActualEndDateTimeUtc.HasValue && p.ActualEndDateTimeUtc.Value <= deadline.UtcDateTime).Select(s => s.TriggerId).ToList();
+
+                connection.Delete<Entities.JobRun>(p => p.ActualEndDateTimeUtc.HasValue && p.ActualEndDateTimeUtc.Value <= deadline.UtcDateTime);
+
+                // also delete orphaned scheduled/instant triggers
+                connection.Delete<Entities.Trigger>(p => (p.Type == TriggerType.InstantTrigger || p.Type == TriggerType.ScheduledTrigger) && Sql.In(p.Id, triggerIds));
+            }
         }
 
         private static void AssertOnlyOneFilterIsActive(string jobTypeFilter, string jobUniqueNameFilter, string query)

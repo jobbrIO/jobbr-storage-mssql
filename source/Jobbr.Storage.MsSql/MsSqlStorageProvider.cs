@@ -533,9 +533,9 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = this.connectionFactory.Open())
             {
-                var triggerIds = connection.Select<Entities.JobRun>(p => p.ActualEndDateTimeUtc.HasValue && p.ActualEndDateTimeUtc.Value <= deadline.UtcDateTime).Select(s => s.TriggerId).ToList();
+                var triggerIds = connection.Select<Entities.JobRun>(p => p.PlannedStartDateTimeUtc <= deadline.UtcDateTime).Select(s => s.TriggerId).ToList();
 
-                connection.Delete<Entities.JobRun>(p => p.ActualEndDateTimeUtc.HasValue && p.ActualEndDateTimeUtc.Value <= deadline.UtcDateTime);
+                connection.Delete<Entities.JobRun>(p => p.PlannedStartDateTimeUtc <= deadline.UtcDateTime);
 
                 // also delete orphaned scheduled/instant triggers
                 connection.Delete<Entities.Trigger>(p => (p.Type == TriggerType.InstantTrigger || p.Type == TriggerType.ScheduledTrigger) && Sql.In(p.Id, triggerIds));

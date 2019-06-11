@@ -14,7 +14,7 @@ namespace Jobbr.Storage.MsSql.Tests
     {
         private MsSqlStorageProvider storageProvider;
 
-        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("APPVEYOR") == "True" ? "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!" : "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("APPVEYOR") == "True" ? "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!" : "Data Source=.;Initial Catalog=JobbrTest;Integrated Security=True";
 
         [TestInitialize]
         public void SetupDatabaseInstance()
@@ -1179,9 +1179,8 @@ namespace Jobbr.Storage.MsSql.Tests
             {
                 Job = new Job { Id = job1.Id },
                 Trigger = new InstantTrigger { Id = trigger1.Id },
-                PlannedStartDateTimeUtc = DateTime.UtcNow,
+                PlannedStartDateTimeUtc = DateTime.UtcNow.AddDays(-31),
                 State = JobRunStates.Completed,
-                ActualEndDateTimeUtc = DateTime.UtcNow.AddDays(-31)
             };
 
             this.storageProvider.AddJobRun(existingJobRun);
@@ -1216,9 +1215,8 @@ namespace Jobbr.Storage.MsSql.Tests
             {
                 Job = new Job { Id = job1.Id },
                 Trigger = new InstantTrigger { Id = trigger1.Id },
-                PlannedStartDateTimeUtc = DateTime.UtcNow,
+                PlannedStartDateTimeUtc = DateTime.UtcNow.AddDays(-31),
                 State = JobRunStates.Completed,
-                ActualEndDateTimeUtc = DateTime.UtcNow.AddDays(-31)
             };
 
             this.storageProvider.AddJobRun(existingJobRun);
@@ -1253,9 +1251,8 @@ namespace Jobbr.Storage.MsSql.Tests
             {
                 Job = new Job { Id = job1.Id },
                 Trigger = new InstantTrigger { Id = trigger1.Id },
-                PlannedStartDateTimeUtc = DateTime.UtcNow,
+                PlannedStartDateTimeUtc = DateTime.UtcNow.AddDays(-31),
                 State = JobRunStates.Completed,
-                ActualEndDateTimeUtc = DateTime.UtcNow.AddDays(-31)
             };
 
             this.storageProvider.AddJobRun(existingJobRun);

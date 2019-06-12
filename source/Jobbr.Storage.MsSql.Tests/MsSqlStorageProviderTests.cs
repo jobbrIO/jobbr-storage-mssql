@@ -1,11 +1,11 @@
-﻿using System;
-using System.Data.SqlClient;
-using System.Linq;
-using Jobbr.ComponentModel.JobStorage.Model;
+﻿using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.SqlServer;
 using Shouldly;
+using System;
+using System.Data.SqlClient;
+using System.Linq;
 
 namespace Jobbr.Storage.MsSql.Tests
 {
@@ -180,7 +180,7 @@ namespace Jobbr.Storage.MsSql.Tests
             this.storageProvider.AddJob(job2);
             this.storageProvider.AddJob(job3);
 
-            var jobs = this.storageProvider.GetJobs(sort: new []{ "-Type" });
+            var jobs = this.storageProvider.GetJobs(sort: new[] { "-Type" });
 
             jobs.Items.Count.ShouldBe(3);
             jobs.Items[0].Id.ShouldBe(job3.Id);
@@ -514,7 +514,7 @@ namespace Jobbr.Storage.MsSql.Tests
             var jobRun1 = new JobRun { Job = new Job { Id = job1.Id }, Trigger = new InstantTrigger { Id = trigger1.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
             var jobRun2 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
             var jobRun3 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow };
-            var jobRun4 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, Deleted = true};
+            var jobRun4 = new JobRun { Job = new Job { Id = job2.Id }, Trigger = new InstantTrigger { Id = trigger2.Id }, PlannedStartDateTimeUtc = DateTime.UtcNow, Deleted = true };
 
             this.storageProvider.AddJobRun(jobRun1);
             this.storageProvider.AddJobRun(jobRun2);
@@ -575,7 +575,7 @@ namespace Jobbr.Storage.MsSql.Tests
             this.storageProvider.AddJobRun(jobRun3);
             this.storageProvider.AddJobRun(jobRun4);
 
-            var jobRuns = this.storageProvider.GetJobRunsByStates(new [] { JobRunStates.Failed, JobRunStates.Connected });
+            var jobRuns = this.storageProvider.GetJobRunsByStates(new[] { JobRunStates.Failed, JobRunStates.Connected });
 
             jobRuns.Items.Count.ShouldBe(2);
 
@@ -583,7 +583,7 @@ namespace Jobbr.Storage.MsSql.Tests
 
             jobRuns.Items.Count.ShouldBe(2);
 
-            jobRuns = this.storageProvider.GetJobRunsByStates(new[] {JobRunStates.Failed, JobRunStates.Completed });
+            jobRuns = this.storageProvider.GetJobRunsByStates(new[] { JobRunStates.Failed, JobRunStates.Completed });
 
             jobRuns.Items.Count.ShouldBe(3);
         }
@@ -1162,6 +1162,155 @@ namespace Jobbr.Storage.MsSql.Tests
             jobFromStorage.Id.ShouldBe(job.Id);
             jobFromStorage.UniqueName.ShouldBe(job.UniqueName);
             jobFromStorage.Type.ShouldBe(job.Type);
+        }
+
+        [TestMethod]
+        public void JobRun_With_Instant_Trigger_Is_Deleted_When_Retention_Is_Applied()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var existingJobRun = new JobRun
+            {
+                Job = new Job { Id = job1.Id },
+                Trigger = new InstantTrigger { Id = trigger1.Id },
+                PlannedStartDateTimeUtc = DateTime.UtcNow.AddDays(-31),
+                State = JobRunStates.Completed,
+            };
+
+            this.storageProvider.AddJobRun(existingJobRun);
+
+            var existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+            var existingTriggerFromDb = this.storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingJobRunFromDb.ShouldNotBeNull();
+            existingTriggerFromDb.ShouldNotBeNull();
+
+            this.storageProvider.ApplyRetention(DateTimeOffset.UtcNow.AddDays(-30));
+
+            existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+
+            existingJobRunFromDb.ShouldBeNull();
+
+            Should.Throw<InvalidOperationException>(() => this.storageProvider.GetTriggerById(job1.Id, trigger1.Id));
+        }
+
+        [TestMethod]
+        public void JobRun_With_Scheduled_Trigger_Is_Deleted_When_Retention_Is_Applied()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new ScheduledTrigger { IsActive = true, StartDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromDays(31))};
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var existingJobRun = new JobRun
+            {
+                Job = new Job { Id = job1.Id },
+                Trigger = new InstantTrigger { Id = trigger1.Id },
+                PlannedStartDateTimeUtc = DateTime.UtcNow.AddDays(-31),
+                State = JobRunStates.Completed,
+            };
+
+            this.storageProvider.AddJobRun(existingJobRun);
+
+            var existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+            var existingTriggerFromDb = this.storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingJobRunFromDb.ShouldNotBeNull();
+            existingTriggerFromDb.ShouldNotBeNull();
+
+            this.storageProvider.ApplyRetention(DateTimeOffset.UtcNow.AddDays(-30));
+
+            existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+
+            existingJobRunFromDb.ShouldBeNull();
+
+            Should.Throw<InvalidOperationException>(() => this.storageProvider.GetTriggerById(job1.Id, trigger1.Id));
+        }
+
+        [TestMethod]
+        public void JobRun_With_Recurring_Trigger_Is_Deleted_When_Retention_Is_Applied()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new RecurringTrigger { IsActive = true, StartDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromDays(31)), Definition = "* * * * *"};
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var existingJobRun = new JobRun
+            {
+                Job = new Job { Id = job1.Id },
+                Trigger = new InstantTrigger { Id = trigger1.Id },
+                PlannedStartDateTimeUtc = DateTime.UtcNow.AddDays(-31),
+                State = JobRunStates.Completed,
+            };
+
+            this.storageProvider.AddJobRun(existingJobRun);
+
+            var existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+            var existingTriggerFromDb = this.storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingJobRunFromDb.ShouldNotBeNull();
+            existingTriggerFromDb.ShouldNotBeNull();
+
+            this.storageProvider.ApplyRetention(DateTimeOffset.UtcNow.AddDays(-30));
+
+            existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+
+            existingJobRunFromDb.ShouldBeNull();
+
+            existingTriggerFromDb = this.storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingTriggerFromDb.ShouldNotBeNull();
+        }
+
+        [TestMethod]
+        public void Only_Jobs_After_Deadline_Are_Deleted()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
+
+            this.storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = true };
+
+            this.storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var existingJobRun = new JobRun
+            {
+                Job = new Job { Id = job1.Id },
+                Trigger = new InstantTrigger { Id = trigger1.Id },
+                PlannedStartDateTimeUtc = DateTime.UtcNow,
+                State = JobRunStates.Completed,
+                ActualEndDateTimeUtc = DateTime.UtcNow.AddDays(-29)
+            };
+
+            this.storageProvider.AddJobRun(existingJobRun);
+
+            var existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+            var existingTriggerFromDb = this.storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingJobRunFromDb.ShouldNotBeNull();
+            existingTriggerFromDb.ShouldNotBeNull();
+
+            this.storageProvider.ApplyRetention(DateTimeOffset.UtcNow.AddDays(-30));
+
+            existingJobRunFromDb = this.storageProvider.GetJobRunById(existingJobRun.Id);
+
+            existingJobRunFromDb.ShouldNotBeNull();
+
+            existingTriggerFromDb = this.storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingTriggerFromDb.ShouldNotBeNull();
         }
     }
 }

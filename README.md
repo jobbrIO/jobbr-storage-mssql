@@ -36,6 +36,9 @@ builder.AddMsSqlStorage(config =>
 
     // Create tables (is set by default to true)
     configuration.CreateTablesIfNotExists = true;
+
+    // Define how long jobs, triggers & runs should be kept in the database (optional)
+    configuration.Retention = TimeSpan.FromDays(365);
 });
 
 server.Start();

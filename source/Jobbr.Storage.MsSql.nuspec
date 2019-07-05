@@ -10,10 +10,10 @@
     <iconUrl>https://github.com/jobbrIO/artwork/raw/master/build/icons/icon_detailed_256_dark.png</iconUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>Jobbr is a .NET JobServer</description>
-    <copyright>Copyright 2018</copyright>
+    <copyright>Copyright 2019</copyright>
     <dependencies>
       <dependency id="Jobbr.ComponentModel.Registration" version="[1.0,1.1)"/>
-      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.3,1.4)"/>
+      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.4,1.5)"/>
       <dependency id="ServiceStack.Common" version="[5.1,6)"/>
       <dependency id="ServiceStack.Interfaces" version="[5.1,6)"/>
       <dependency id="ServiceStack.OrmLite" version="[5.1,6)"/>
@@ -22,8 +22,8 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="..\ilmerged\Jobbr.Storage.MsSql.dll" target="lib\net462"/>
-    <file src="..\ilmerged\Jobbr.Storage.MsSql.pdb" target="lib\net462"/>
+    <file src="Jobbr.Storage.MsSql\bin\Release\Jobbr.Storage.MsSql.dll" target="lib\net462"/>
+    <file src="Jobbr.Storage.MsSql\bin\Release\Jobbr.Storage.MsSql.pdb" target="lib\net462"/>
     <file src="Jobbr.Storage.MsSql\CreateTables.sql" target=""/>
   </files>
 </package>

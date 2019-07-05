@@ -13,6 +13,7 @@ CREATE TABLE [dbo].[Jobs](
 	[UpdatedDateTimeUtc] [datetime] NULL,
 	[CreatedDateTimeUtc] [datetime] NULL,
 	[Deleted] [bit] NOT NULL,
+	[MaxConcurrentJobRuns] [int] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

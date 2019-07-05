@@ -26,5 +26,7 @@ namespace Jobbr.Storage.MsSql.Entities
         public DateTime? CreatedDateTimeUtc { get; set; }
 
         public bool Deleted { get; set; }
+
+        public int MaxConcurrentJobRuns { get; set; }
     }
 }

@@ -44,17 +44,17 @@
     <Reference Include="Jobbr.ComponentModel.Execution, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Jobbr.ComponentModel.Execution.1.0.1\lib\net462\Jobbr.ComponentModel.Execution.dll</HintPath>
     </Reference>
-    <Reference Include="Jobbr.ComponentModel.JobStorage, Version=1.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Jobbr.ComponentModel.JobStorage.1.3.0\lib\net462\Jobbr.ComponentModel.JobStorage.dll</HintPath>
+    <Reference Include="Jobbr.ComponentModel.JobStorage, Version=1.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Jobbr.ComponentModel.JobStorage.1.4.0\lib\net462\Jobbr.ComponentModel.JobStorage.dll</HintPath>
     </Reference>
-    <Reference Include="Jobbr.ComponentModel.Management, Version=1.5.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Jobbr.ComponentModel.Management.1.5.0\lib\net462\Jobbr.ComponentModel.Management.dll</HintPath>
+    <Reference Include="Jobbr.ComponentModel.Management, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Jobbr.ComponentModel.Management.1.6.0\lib\net462\Jobbr.ComponentModel.Management.dll</HintPath>
     </Reference>
     <Reference Include="Jobbr.ComponentModel.Registration, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Jobbr.ComponentModel.Registration.1.0.1\lib\net462\Jobbr.ComponentModel.Registration.dll</HintPath>
     </Reference>
-    <Reference Include="Jobbr.Server, Version=1.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Jobbr.Server.1.4.0\lib\net462\Jobbr.Server.dll</HintPath>
+    <Reference Include="Jobbr.Server, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Jobbr.Server.1.6.0-rc.1\lib\net462\Jobbr.Server.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="ServiceStack.Common, Version=5.0.0.0, Culture=neutral, PublicKeyToken=02c12cbda47e6587, processorArchitecture=MSIL">
@@ -119,6 +119,7 @@
     <Compile Include="ServerRegistrationTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

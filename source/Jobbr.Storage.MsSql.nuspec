@@ -13,7 +13,7 @@
     <copyright>Copyright 2019</copyright>
     <dependencies>
       <dependency id="Jobbr.ComponentModel.Registration" version="[1.0,1.1)"/>
-      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.4,1.5)"/>
+      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.5,1.6)"/>
       <dependency id="ServiceStack.Common" version="[5.1,6)"/>
       <dependency id="ServiceStack.Interfaces" version="[5.1,6)"/>
       <dependency id="ServiceStack.OrmLite" version="[5.1,6)"/>

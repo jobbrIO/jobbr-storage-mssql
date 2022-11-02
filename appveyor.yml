@@ -1,7 +1,4 @@
-image: Visual Studio 2017
-
-services:
-  - mssql2017
+image: Visual Studio 2019
 
 branches:
   only:
@@ -10,10 +7,20 @@ branches:
     - /release/.*/
     - /hotfix/.*/
     - /feature/.*/
+    - /bugfix/.*/
+skip_commits:
+  files:
+    - docs/*
+
+services:
+  - mssql2017
+
+environment:
+  IGNORE_NORMALISATION_GIT_HEAD_MOVE: 1
 
 install:
   - git submodule update --init --recursive
-  - choco install gitversion.portable -y
+  - choco install gitversion.portable --version 5.10.3 -y
 
 assembly_info:
   patch: false
@@ -30,9 +37,9 @@ build:
   project: source/Jobbr.Storage.MsSql.sln
 
 after_build:
-  - cmd: nuget install ILMerge -ExcludeVersion -Version 2.14.1208
+  - cmd: nuget install ILMerge -ExcludeVersion
   - cmd: mkdir ilmerged
-  - cmd: ILMerge\tools\ILMerge.exe /out:ilmerged/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/Jobbr.Storage.MsSql.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
+  - cmd: ILMerge\tools\net452\ILMerge.exe /out:ilmerged/Jobbr.Storage.MsSql.dll source/Jobbr.Storage.MsSql/bin/Release/Jobbr.Storage.MsSql.dll /target:library /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /wildcards /internalize:internalize_exclude.txt 
   - cmd: nuget pack source\Jobbr.Storage.MsSql.nuspec -version "%GitVersion_SemVer%" -prop "target=%CONFIGURATION%"
   - cmd: appveyor PushArtifact "Jobbr.Storage.MsSql.%GitVersion_SemVer%.nupkg"
 
@@ -40,6 +47,6 @@ deploy:
 - provider: NuGet
   server: https://nuget.org
   api_key:
-    secure: +AgExDSzPqydFKSbpQBS0j3s8d3rwTli8aRmMbUZ3DVBL29Lj7MNPOxEDLJT7f07
+    secure: anKLNUxe1pn63rrNVCigoQVfA/fWML9gEpE1UHRLK/LDmQX4SM9WwzDx0kliHKWC
   on:
     appveyor_repo_tag: true

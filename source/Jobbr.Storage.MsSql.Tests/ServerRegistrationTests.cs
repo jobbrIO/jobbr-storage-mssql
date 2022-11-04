@@ -8,7 +8,6 @@ namespace Jobbr.Storage.MsSql.Tests
     public partial class ServerRegistrationTests
     {
         [TestMethod]
-        [Ignore]
         public void RegisteredAsComponent_JobbrIsStarted_ProviderHasCorrectType()
         {
             var builder = new JobbrBuilder();

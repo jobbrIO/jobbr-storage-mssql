@@ -10,6 +10,11 @@ namespace Jobbr.Storage.MsSql
 
         public Type ConfigurationType { get; set; } = typeof(JobbrMsSqlConfiguration);
 
+        public JobbrMsSqlConfigurationValidator(ILoggerFactory loggerFactory)
+        {
+            _logger = loggerFactory.CreateLogger<MsSqlStorageProvider>();
+        }
+
         public bool Validate(object configuration)
         {
             if (!(configuration is JobbrMsSqlConfiguration config))

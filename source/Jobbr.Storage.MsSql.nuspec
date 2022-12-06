@@ -1,30 +1,28 @@
 ﻿<?xml version="1.0"?>
 <package >
-  <metadata>
-    <id>Jobbr.Storage.MsSql</id>
-    <version>$version$</version>
-    <authors>Jobbr</authors>
-    <owners>Jobbr</owners>
-    <projectUrl>https://github.com/jobbrIO/jobbr-storage-mssql</projectUrl>
-    <license type="expression">GPL-3.0-only</license>
-    <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <description>This is a storage adapter implementation for the Jobbr .NET job server to store job related information on MS SQL Servers.</description>
-    <copyright>Copyright 2022</copyright>
-    <icon>images\icon.png</icon>
-    <dependencies>
-      <dependency id="Jobbr.ComponentModel.Registration" version="[1.0,1.1)"/>
-      <dependency id="Jobbr.ComponentModel.JobStorage" version="[1.3,1.4)"/>
-      <dependency id="ServiceStack.Common" version="[5.1,6)"/>
-      <dependency id="ServiceStack.Interfaces" version="[5.1,6)"/>
-      <dependency id="ServiceStack.OrmLite" version="[5.1,6)"/>
-      <dependency id="ServiceStack.OrmLite.SqlServer" version="[5.1,6)"/>
-      <dependency id="ServiceStack.Text" version="[5.1,6)"/>
-    </dependencies>
-  </metadata>
-  <files>
-    <file src="..\ilmerged\Jobbr.Storage.MsSql.dll" target="lib\net462"/>
-    <file src="..\ilmerged\Jobbr.Storage.MsSql.pdb" target="lib\net462"/>
-    <file src="Jobbr.Storage.MsSql\CreateTables.sql" target=""/>
-    <file src="icon.png" target="images/"/>
-  </files>
+	<metadata>
+		<id>Jobbr.Storage.MsSql</id>
+		<version>$version$</version>
+		<authors>Jobbr</authors>
+		<owners>Jobbr</owners>
+		<projectUrl>https://github.com/jobbrIO/jobbr-storage-mssql</projectUrl>
+		<license type="expression">GPL-3.0-only</license>
+		<requireLicenseAcceptance>true</requireLicenseAcceptance>
+		<description>This is a storage adapter implementation for the Jobbr .NET job server to store job related information on MS SQL Servers.</description>
+		<copyright>Copyright 2022</copyright>
+		<icon>images\icon.png</icon>
+		<dependencies>
+			<dependency id="ServiceStack.OrmLite.SqlServer" version="[5.1,6.5)"/>
+			<group targetFramework="netstandard2.0">
+				<dependency id="Jobbr.ComponentModel.Registration" version="[1.0,1.1)"/>
+				<dependency id="Jobbr.ComponentModel.JobStorage" version="[1.3,1.6.1)"/>
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="Jobbr.Storage.MsSql\bin\$target$\netstandard2.0\Jobbr.Storage.MsSql.dll" target="lib\netstandard2.0"/>
+		<file src="Jobbr.Storage.MsSql\bin\$target$\netstandard2.0\Jobbr.Storage.MsSql.pdb" target="lib\netstandard2.0"/>
+		<file src="Jobbr.Storage.MsSql\CreateTables.sql" target=""/>
+		<file src="icon.png" target="images/"/>
+	</files>
 </package>

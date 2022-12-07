@@ -64,8 +64,6 @@ This extension is built using the following great open source projects
 
 * [OrmLite](https://github.com/ServiceStack/ServiceStack.OrmLite) 
   [(GNU Affero General Public License)](https://github.com/ServiceStack/ServiceStack.OrmLite/blob/master/license.txt)
-* [LibLog](https://github.com/damianh/LibLog) 
-  [(MIT)](https://github.com/damianh/LibLog/blob/master/licence.txt)
 
 # Credits
 

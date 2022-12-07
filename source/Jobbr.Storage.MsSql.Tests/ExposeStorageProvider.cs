@@ -7,7 +7,7 @@ namespace Jobbr.Storage.MsSql.Tests
     {
         public class ExposeStorageProvider : IJobbrComponent
         {
-            internal readonly IJobStorageProvider JobStorageProvider;
+            internal IJobStorageProvider JobStorageProvider { get; }
             public static ExposeStorageProvider Instance;
 
             public ExposeStorageProvider(IJobStorageProvider jobStorageProvider)

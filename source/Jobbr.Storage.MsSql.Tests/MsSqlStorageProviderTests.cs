@@ -77,7 +77,7 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
-        public void Get_Non_Existing_Job_By_Unique_Id()
+        public void Get_Non_Existing_Job_By_Unique_Name()
         {
             _storageProvider.GetJobByUniqueName("i-dont-exist").ShouldBeNull();
         }
@@ -98,6 +98,12 @@ namespace Jobbr.Storage.MsSql.Tests
             job.Id.ShouldBe(job2.Id);
             job2.UniqueName.ShouldBe("testjob");
             job2.Type.ShouldBe("Jobs.Test");
+        }
+
+        [TestMethod]
+        public void Get_Non_Existing_Job_By_Id()
+        {
+            _storageProvider.GetJobById(1).ShouldBeNull();
         }
 
         [TestMethod]
@@ -824,6 +830,31 @@ namespace Jobbr.Storage.MsSql.Tests
         }
 
         [TestMethod]
+        public void Get_Trigger_By_Id()
+        {
+            var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1", Parameters = "param", Title = "title" };
+
+            _storageProvider.AddJob(job1);
+
+            var trigger1 = new InstantTrigger { IsActive = true, DelayedMinutes = 1337, Parameters = "triggerparams", Comment = "comment", UserDisplayName = "chefkoch", UserId = "ck" };
+
+            _storageProvider.AddTrigger(job1.Id, trigger1);
+
+            var trigger2 = _storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            trigger2.Id.ShouldBe(trigger1.Id);
+            trigger2.JobId.ShouldBe(job1.Id);
+            trigger2.Parameters.ShouldBe("triggerparams");
+            trigger2.ShouldBeOfType<InstantTrigger>();
+        }
+
+        [TestMethod]
+        public void Get_Non_Existing_Trigger_By_Id()
+        {
+            _storageProvider.GetTriggerById(1, 1).ShouldBeNull();
+        }
+
+        [TestMethod]
         public void Get_Last_JobRun_By_TriggerId()
         {
             var job1 = new Job { UniqueName = "testjob1", Type = "Jobs.Test1" };
@@ -1197,7 +1228,9 @@ namespace Jobbr.Storage.MsSql.Tests
 
             existingJobRunFromDb.ShouldBeNull();
 
-            Should.Throw<InvalidOperationException>(() => _storageProvider.GetTriggerById(job1.Id, trigger1.Id));
+            existingTriggerFromDb = _storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingTriggerFromDb.ShouldBeNull();
         }
 
         [TestMethod]
@@ -1233,7 +1266,9 @@ namespace Jobbr.Storage.MsSql.Tests
 
             existingJobRunFromDb.ShouldBeNull();
 
-            Should.Throw<InvalidOperationException>(() => _storageProvider.GetTriggerById(job1.Id, trigger1.Id));
+            existingTriggerFromDb = _storageProvider.GetTriggerById(job1.Id, trigger1.Id);
+
+            existingTriggerFromDb.ShouldBeNull();
         }
 
         [TestMethod]

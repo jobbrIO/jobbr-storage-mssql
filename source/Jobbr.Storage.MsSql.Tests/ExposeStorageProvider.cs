@@ -3,30 +3,27 @@ using Jobbr.ComponentModel.Registration;
 
 namespace Jobbr.Storage.MsSql.Tests
 {
-    public partial class ServerRegistrationTests
+    public class ExposeStorageProvider : IJobbrComponent
     {
-        public class ExposeStorageProvider : IJobbrComponent
+        internal IJobStorageProvider JobStorageProvider { get; }
+        public static ExposeStorageProvider Instance;
+
+        public ExposeStorageProvider(IJobStorageProvider jobStorageProvider)
         {
-            internal IJobStorageProvider JobStorageProvider { get; }
-            public static ExposeStorageProvider Instance;
+            JobStorageProvider = jobStorageProvider;
+            Instance = this;
+        }
 
-            public ExposeStorageProvider(IJobStorageProvider jobStorageProvider)
-            {
-                JobStorageProvider = jobStorageProvider;
-                Instance = this;
-            }
+        public void Dispose()
+        {
+        }
 
-            public void Dispose()
-            {
-            }
+        public void Start()
+        {
+        }
 
-            public void Start()
-            {
-            }
-
-            public void Stop()
-            {
-            }
+        public void Stop()
+        {
         }
     }
 }

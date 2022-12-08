@@ -76,7 +76,7 @@ namespace Jobbr.Storage.MsSql
         {
             using (var connection = _connectionFactory.Open())
             {
-                return connection.SingleById<Entities.Job>(id).ToModel();
+                return connection.SingleById<Entities.Job>(id)?.ToModel();
             }
         }
 
@@ -435,7 +435,7 @@ namespace Jobbr.Storage.MsSql
             using (var connection = _connectionFactory.Open())
             {
                 return connection.Select<Trigger>(p => p.JobId == jobId && p.Id == triggerId)
-                    .First()
+                    .FirstOrDefault()?
                     .ToModel();
             }
         }

@@ -435,8 +435,8 @@ namespace Jobbr.Storage.MsSql
             using (var connection = _connectionFactory.Open())
             {
                 return connection.Select<Trigger>(p => p.JobId == jobId && p.Id == triggerId)
-                    .FirstOrDefault()
-                    ?.ToModel();
+                    .FirstOrDefault()?
+                    .ToModel();
             }
         }
 

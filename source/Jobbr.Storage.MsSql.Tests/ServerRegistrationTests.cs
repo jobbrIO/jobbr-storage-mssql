@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Jobbr.Storage.MsSql.Tests
 {
     [TestClass]
-    public partial class ServerRegistrationTests
+    public class ServerRegistrationTests
     {
         [TestMethod]
         [Ignore("Jobbr.Server has to be updated to .NET 6 first.")]

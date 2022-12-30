@@ -7,6 +7,7 @@
     <Product>Jobbr.Server.MsSql</Product>
     <Copyright>Copyright © Zuehlke Engineering 2022</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PreBuildEvent />
     <PreBuildEvent />
     <PreBuildEvent />
@@ -32,4 +33,7 @@
     <PackageReference Include="Jobbr.ComponentModel.JobStorage" Version="1.6.0" />
     <PackageReference Include="Jobbr.ComponentModel.Registration" Version="1.0.3" />
   </ItemGroup>
+  <ImportGroup>
+    <Import Project="..\submodules\devsupport\src\Jobbr.DevSupport.StyleCopAnalyzer\Jobbr.DevSupport.StyleCopAnalyzer.targets" />
+  </ImportGroup>
 </Project>

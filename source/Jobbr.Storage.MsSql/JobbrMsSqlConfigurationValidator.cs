@@ -1,6 +1,6 @@
+using System;
 using Jobbr.ComponentModel.Registration;
 using Microsoft.Extensions.Logging;
-using System;
 
 namespace Jobbr.Storage.MsSql
 {
@@ -8,12 +8,12 @@ namespace Jobbr.Storage.MsSql
     {
         private readonly ILogger<MsSqlStorageProvider> _logger;
 
-        public Type ConfigurationType { get; set; } = typeof(JobbrMsSqlConfiguration);
-
         public JobbrMsSqlConfigurationValidator(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<MsSqlStorageProvider>();
         }
+
+        public Type ConfigurationType { get; set; } = typeof(JobbrMsSqlConfiguration);
 
         public bool Validate(object configuration)
         {

@@ -24,7 +24,6 @@ namespace Jobbr.Storage.MsSql.Mapping
         public static Entities.Job ToEntity(this Job model)
         {
             var entity = new Entities.Job
-
             {
                 Id = model.Id,
                 CreatedDateTimeUtc = model.CreatedDateTimeUtc,

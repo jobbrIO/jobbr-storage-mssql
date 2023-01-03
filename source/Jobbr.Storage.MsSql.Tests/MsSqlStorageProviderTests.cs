@@ -417,7 +417,6 @@ namespace Jobbr.Storage.MsSql.Tests
             jobRuns.Items.Count.ShouldBe(1);
         }
 
-
         [TestMethod]
         public void Query_JobRuns_By_JobType()
         {

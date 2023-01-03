@@ -1,10 +1,10 @@
-﻿using Jobbr.ComponentModel.JobStorage;
+﻿using System;
+using System.Linq;
+using Jobbr.ComponentModel.JobStorage;
 using Jobbr.ComponentModel.JobStorage.Model;
 using Jobbr.Storage.MsSql.Entities;
 using Jobbr.Storage.MsSql.Mapping;
 using ServiceStack.OrmLite;
-using System;
-using System.Linq;
 using Job = Jobbr.ComponentModel.JobStorage.Model.Job;
 using JobRun = Jobbr.ComponentModel.JobStorage.Model.JobRun;
 
@@ -39,8 +39,6 @@ namespace Jobbr.Storage.MsSql
                 session.CreateTableIfNotExists<Entities.JobRun>();
             }
         }
-
-        #region Jobs
 
         public void AddJob(Job job)
         {
@@ -139,10 +137,6 @@ namespace Jobbr.Storage.MsSql
                 };
             }
         }
-
-        #endregion
-
-        #region JobRuns
 
         public void AddJobRun(JobRun jobRun)
         {
@@ -305,10 +299,6 @@ namespace Jobbr.Storage.MsSql
             }
         }
 
-        #endregion
-
-        #region Triggers
-
         public void AddTrigger(long jobId, InstantTrigger trigger)
         {
             trigger.JobId = jobId;
@@ -372,8 +362,9 @@ namespace Jobbr.Storage.MsSql
             int page = 1,
             int pageSize = 50,
             string jobTypeFilter = null,
-            string jobUniqueNameFilter = null, string query = null, params string[] sort
-        )
+            string jobUniqueNameFilter = null,
+            string query = null,
+            params string[] sort)
         {
             using (var connection = _connectionFactory.Open())
             {
@@ -512,8 +503,6 @@ namespace Jobbr.Storage.MsSql
                 trigger.Id = connection.Insert(entity, true);
             }
         }
-
-        #endregion
 
         public bool IsAvailable()
         {

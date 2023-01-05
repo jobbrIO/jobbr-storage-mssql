@@ -28,10 +28,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-    <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="6.4.0" />
+    <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="6.5.0" />
     <PackageReference Include="System.Memory" Version="4.5.5" />
-    <PackageReference Include="Jobbr.ComponentModel.JobStorage" Version="1.6.0" />
-    <PackageReference Include="Jobbr.ComponentModel.Registration" Version="1.0.3" />
+    <PackageReference Include="Jobbr.ComponentModel.JobStorage" Version="3.0.0-rc.1" />
+    <PackageReference Include="Jobbr.ComponentModel.Registration" Version="3.0.0-rc.2" />
   </ItemGroup>
   <ImportGroup>
     <Import Project="..\submodules\devsupport\src\Jobbr.DevSupport.StyleCopAnalyzer\Jobbr.DevSupport.StyleCopAnalyzer.targets" />

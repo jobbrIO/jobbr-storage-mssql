@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Jobbr.DevSupport.ReferencedVersionAsserter;
+﻿using Jobbr.DevSupport.ReferencedVersionAsserter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Jobbr.Storage.MsSql.Tests
@@ -7,8 +6,6 @@ namespace Jobbr.Storage.MsSql.Tests
     [TestClass]
     public class PackagingTests
     {
-        private readonly bool isPre = Assembly.GetExecutingAssembly().GetInformalVersion().Contains("-");
-
         [TestMethod]
         public void Feature_NuSpec_IsCompliant()
         {
@@ -16,7 +13,11 @@ namespace Jobbr.Storage.MsSql.Tests
 
             asserter.Add(new PackageExistsInBothRule("Jobbr.ComponentModel.Registration"));
             asserter.Add(new PackageExistsInBothRule("Jobbr.ComponentModel.JobStorage"));
+            asserter.Add(new PackageExistsInBothRule("Microsoft.Extensions.Logging.Abstractions"));
+
             asserter.Add(new VersionIsIncludedInRange("Jobbr.ComponentModel.*"));
+            asserter.Add(new VersionIsIncludedInRange("Microsoft.Extensions.Logging.Abstractions"));
+
             asserter.Add(new NoMajorChangesInNuSpec("Jobbr.*"));
 
             var result = asserter.Validate();

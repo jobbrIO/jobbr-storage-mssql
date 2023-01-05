@@ -1,5 +1,6 @@
 ﻿using Jobbr.ComponentModel.Registration;
 using Jobbr.Server.Builder;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Jobbr.Storage.MsSql.Tests
@@ -8,11 +9,11 @@ namespace Jobbr.Storage.MsSql.Tests
     public class ServerRegistrationTests
     {
         [TestMethod]
-        [Ignore("Jobbr.Server has to be updated to .NET 6 first.")]
         public void RegisteredAsComponent_JobbrIsStarted_ProviderHasCorrectType()
         {
-            var builder = new JobbrBuilder();
-            builder.Register<IJobbrComponent>(typeof(ExposeStorageProvider));
+            var builder = new JobbrBuilder(new NullLoggerFactory());
+
+            builder.RegisterForCollection<IJobbrComponent>(typeof(ExposeStorageProvider));
 
             builder.AddMsSqlStorage(config =>
             {

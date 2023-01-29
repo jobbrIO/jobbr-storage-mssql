@@ -9,14 +9,14 @@
     <license type="expression">GPL-3.0-only</license>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>This is a storage adapter implementation for the Jobbr .NET job server to store job related information on MS SQL Servers.</description>
-    <copyright>Copyright 2022</copyright>
+    <copyright>Copyright 2023</copyright>
     <icon>images\icon.png</icon>
     <dependencies>
       <group targetFramework="netstandard2.0">
         <dependency id="ServiceStack.OrmLite.SqlServer" version="[6.5,6.6)"/>
         <dependency id="Jobbr.ComponentModel.Registration" version="[2.9,3.1)"/>
         <dependency id="Jobbr.ComponentModel.JobStorage" version="[2.9,3.1)"/>
-        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[7.0,7.1)" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[6.0,6.1)" />
       </group>
     </dependencies>
   </metadata>

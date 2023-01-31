@@ -16,6 +16,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                 UniqueName = entity.UniqueName,
                 UpdatedDateTimeUtc = entity.UpdatedDateTimeUtc,
                 Deleted = entity.Deleted,
+                MaxConcurrentJobRuns = entity.MaxConcurrentJobRuns,
             };
 
             return job;
@@ -33,6 +34,7 @@ namespace Jobbr.Storage.MsSql.Mapping
                 UniqueName = model.UniqueName,
                 UpdatedDateTimeUtc = model.UpdatedDateTimeUtc,
                 Deleted = model.Deleted,
+                MaxConcurrentJobRuns = model.MaxConcurrentJobRuns,
             };
 
             return entity;

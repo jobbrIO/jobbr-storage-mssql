@@ -14,7 +14,9 @@ namespace Jobbr.Storage.MsSql.Tests
     {
         private MsSqlStorageProvider _storageProvider;
 
-        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("APPVEYOR") == "True" ? "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!" : "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True";
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("APPVEYOR") == "True"
+            ? "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!"
+            : (Environment.GetEnvironmentVariable("GITHUBACTIONS") == "True" ? "Server=localhost,1433;Database=master;User ID=sa;Password=1StrongPwd!!" : "Data Source=localhost\\sqlexpress;Initial Catalog=JobbrTest;Integrated Security=True");
 
         [TestInitialize]
         public void SetupDatabaseInstance()

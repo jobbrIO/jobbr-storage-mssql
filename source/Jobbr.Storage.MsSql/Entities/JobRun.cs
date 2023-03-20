@@ -15,11 +15,17 @@ namespace Jobbr.Storage.MsSql.Entities
 
         [ForeignKey(typeof(Trigger))]
         public long TriggerId { get; set; }
+
         public JobRunStates State { get; set; }
+
         public double? Progress { get; set; }
+
         public DateTime PlannedStartDateTimeUtc { get; set; }
+
         public DateTime? ActualStartDateTimeUtc { get; set; }
+
         public DateTime? ActualEndDateTimeUtc { get; set; }
+
         public DateTime? EstimatedEndDateTimeUtc { get; set; }
 
         [CustomField("NVARCHAR(MAX)")]
@@ -27,6 +33,7 @@ namespace Jobbr.Storage.MsSql.Entities
 
         [CustomField("NVARCHAR(MAX)")]
         public string InstanceParameters { get; set; }
+
         public int? Pid { get; set; }
 
         public bool Deleted { get; set; }

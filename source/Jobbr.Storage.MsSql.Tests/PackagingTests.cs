@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Jobbr.DevSupport.ReferencedVersionAsserter;
+﻿using Jobbr.DevSupport.ReferencedVersionAsserter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Jobbr.Storage.MsSql.Tests
@@ -7,28 +6,17 @@ namespace Jobbr.Storage.MsSql.Tests
     [TestClass]
     public class PackagingTests
     {
-        private readonly bool isPre = Assembly.GetExecutingAssembly().GetInformalVersion().Contains("-");
-
         [TestMethod]
-        [Ignore]
-        public void Feature_NuSpec_IsCompilant()
+        public void Feature_NuSpec_IsCompliant()
         {
-            var asserter = new Asserter(Asserter.ResolvePackagesConfig("Jobbr.Storage.MsSql"), Asserter.ResolveRootFile("Jobbr.Storage.MsSql.nuspec"));
+            var asserter = new Asserter(Asserter.ResolveProjectFile("Jobbr.Storage.MsSql", "Jobbr.Storage.MsSql.csproj"), Asserter.ResolveRootFile("Jobbr.Storage.MsSql.nuspec"));
 
             asserter.Add(new PackageExistsInBothRule("Jobbr.ComponentModel.Registration"));
             asserter.Add(new PackageExistsInBothRule("Jobbr.ComponentModel.JobStorage"));
-
-            if (this.isPre)
-            {
-                // This rule is only valid for Pre-Release versions because we only need exact match on PreRelease Versions
-                asserter.Add(new ExactVersionMatchRule("Jobbr.ComponentModel.*"));
-            }
-            else
-            {
-                asserter.Add(new AllowNonBreakingChangesRule("Jobbr.ComponentModel.*"));
-            }
+            asserter.Add(new PackageExistsInBothRule("Microsoft.Extensions.Logging.Abstractions"));
 
             asserter.Add(new VersionIsIncludedInRange("Jobbr.ComponentModel.*"));
+            asserter.Add(new VersionIsIncludedInRange("Microsoft.Extensions.Logging.Abstractions"));
 
             asserter.Add(new NoMajorChangesInNuSpec("Jobbr.*"));
 

@@ -38,6 +38,7 @@ namespace Jobbr.Storage.MsSql
         private class OrderByEntry
         {
             public string Field { get; set; }
+
             public SortOrder SortOrder { get; set; }
         }
 

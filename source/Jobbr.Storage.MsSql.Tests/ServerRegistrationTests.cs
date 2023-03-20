@@ -1,18 +1,19 @@
 ﻿using Jobbr.ComponentModel.Registration;
 using Jobbr.Server.Builder;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Jobbr.Storage.MsSql.Tests
 {
     [TestClass]
-    public partial class ServerRegistrationTests
+    public class ServerRegistrationTests
     {
         [TestMethod]
-        [Ignore]
         public void RegisteredAsComponent_JobbrIsStarted_ProviderHasCorrectType()
         {
-            var builder = new JobbrBuilder();
-            builder.Register<IJobbrComponent>(typeof(ExposeStorageProvider));
+            var builder = new JobbrBuilder(new NullLoggerFactory());
+
+            builder.RegisterForCollection<IJobbrComponent>(typeof(ExposeStorageProvider));
 
             builder.AddMsSqlStorage(config =>
             {

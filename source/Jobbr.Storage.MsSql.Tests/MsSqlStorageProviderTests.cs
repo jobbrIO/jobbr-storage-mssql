@@ -1,11 +1,11 @@
-﻿using Jobbr.ComponentModel.JobStorage.Model;
+﻿using System;
+using System.Data.SqlClient;
+using System.Linq;
+using Jobbr.ComponentModel.JobStorage.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.SqlServer;
 using Shouldly;
-using System;
-using System.Data.SqlClient;
-using System.Linq;
 
 namespace Jobbr.Storage.MsSql.Tests
 {

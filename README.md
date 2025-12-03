@@ -1,4 +1,8 @@
 
+> [!IMPORTANT]  
+> This repository is obsolete.  
+> Development of Jobbr has been moved to the [jobbr mono-repo](https://github.com/jobbrIO/jobbr).
+
 # Jobbr MSSql Storage Provider [![Develop build status](https://img.shields.io/appveyor/ci/Jobbr/jobbr-storage-mssql/develop.svg?label=develop)](https://ci.appveyor.com/project/Jobbr/jobbr-storage-mssql)
 
 This is a storage adapter implementation for the [Jobbr .NET JobServer](http://www.jobbr.io) to store job related information on MS SQL Servers. 
